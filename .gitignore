@@ -1,6 +1,7 @@
 .Rproj.user
 .Rhistory
 .RData
+.cnf
 
 # Private variables
 TwitterConf.R
