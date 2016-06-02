@@ -1,3 +1,9 @@
 .Rproj.user
 .Rhistory
 .RData
+
+# Private variables
+TwitterConf.R
+
+# Data directory
+data/*
