@@ -22,15 +22,9 @@ setup_twitter_oauth(consumer_key,
 
 # User information extraction
 tuser <- twitteR::getUser("yesmastertweet") 
-
 fr_num <- tuser$getFriendsCount() # num of friends
 fr_ids <- tuser$getFriendIDs() # List of friends IDs
 friends <- friendships(user_ids=fr_ids) # data.frame with friends information
-
-for(i in 1:length(friends)){
-  print(tuser$toDataFrame(friends[i]$screen_name, optional=FALSE))
-}
-
 tfriends <- lookupUsers(friends$name) # tuser structures with friends information 
 
 fol_num <- tuser$getFollowersCount()  # num of followers
@@ -39,16 +33,6 @@ followers <- friendships(user_ids=fol_ids) # data.frame with followers informati
 tfollowers <- lookupUsers(followers$name) # followers information extraction
 
 # Store 20 tweets per friend + friend ID + friend ScreenName
-tuser <- twitteR::getUser("yesmastertweet") 
-ttweets <- twitteR::userTimeline(tuser, n=20)
-
-db_tweets <- data.frame ("id" = 1:fr_num, 
-                         "usr" = 1:fr_num, 
-                         "mssg1" = 1:fr_num, 
-                         "mssg2" = 1:fr_num)
-
-
- 
 fillMatrixOfTweets  <- function() {
   mat <- matrix(nrow = fr_num, ncol=4)
   for (i in 1:fr_num){  # for 'i' friends
@@ -69,51 +53,6 @@ fillMatrixOfTweets  <- function() {
 }
 
 tweets_matrix <- fillMatrixOfTweets()
-########################
-
-for (i in 1:fr_num){  # for 'i' friends
-  ttweets <- userTimeline(tfriends[[i]], n=20)  # load 20 tweets from friend 'i'
-  db_tweets[[1]][[i]] <- ttweets[[i]]$id  # copy id to col 1
-  db_tweets[[2]][[i]] <- ttweets[[i]]$screenName # copy ScreenName to col 2
-  for (j in 1:2)  {
-    if (!ttweets[[j]]$getText()) db_tweets[[2+j]][[i]] <- ttweets[[j]]$getText()
-  }
-}
-
-tweets <- list()
-for(i in 1:length(ttweets)){
-  tweets <- c(ttweets[[i]], tweets)
-}
-
-db_tweets <- data.frame ()
-
-
-
-########################
-
-
-db_tweets <- data.frame(id = 1:fr_num, screenName = c(1:fr_num))
-for (i in 1:5) db_tweets<- ttweets[[i]]
-
-
-
-db_tweets[[1]][[1]] <- tuser$getId()
-db_tweets[[1]][[3]] <- tuser$getScreenName()
-tuser$getId()
-
-for (i in fr_num) { # For every friend
-  ttweets <- userTimeline(tuser, n=20)
-  db_tweets[[i]][[1]] <- tuser$getId()
-  for (j in 1:20) {  # Last 20 tweets
-    db_tweets[i][j] <- ttweets[[j]]  # Last tweets
-  }
-} 
-
-ttweets <- userTimeline(tuser, n=20)
-
-ttweets[[1]]$getCreated() # Tweet date
-ttweets[[1]]$getId()  # Tweet id
-ttweets[[1]]$getScreenName()  # Tweet ScreenName (@ScreenName)
 
 ##############################################################
 
