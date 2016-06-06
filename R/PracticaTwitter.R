@@ -25,6 +25,11 @@ tuser <- twitteR::getUser("yesmastertweet")
 fr_num <- tuser$getFriendsCount() # num of friends
 fr_ids <- tuser$getFriendIDs() # List of friends IDs
 friends <- friendships(user_ids=fr_ids) # data.frame with friends information
+
+for(i in 1:length(friends)){
+  print(tuser$toDataFrame(friends[i]$screen_name, optional=FALSE))
+}
+
 tfriends <- lookupUsers(friends$name) # tuser structures with friends information 
 
 fol_num <- tuser$getFollowersCount()  # num of followers
@@ -34,17 +39,56 @@ tfollowers <- lookupUsers(followers$name) # followers information extraction
 
 # Store 20 tweets per friend + friend ID + friend ScreenName
 tuser <- twitteR::getUser("yesmastertweet") 
-ttweets <- userTimeline(tuser, n=20)
+ttweets <- twitteR::userTimeline(tuser, n=20)
 
-db_tweets <- data.frame ("id" = 1:fr_num, "usr" = 1:fr_num, "mssg1" = 1:fr_num, "mssg2" = 1:fr_num)
+db_tweets <- data.frame ("id" = 1:fr_num, 
+                         "usr" = 1:fr_num, 
+                         "mssg1" = 1:fr_num, 
+                         "mssg2" = 1:fr_num)
+
+
+ 
+fillMatrixOfTweets  <- function() {
+  mat <- matrix(nrow = fr_num, ncol=4)
+  for (i in 1:fr_num){  # for 'i' friends
+    if(!tfriends[[i]]$protected){
+      ttweets <- userTimeline(tfriends[[i]], n=4)  # load 20 tweets from friend 'i'
+      if(length(ttweets) > 0){
+        for (j in 1:length(ttweets))  {
+          print(paste("friend", i, sep= " "))
+          print(paste("tweet", j, length(ttweets), sep= " "))
+          mat[i,j] <- ttweets[[j]]$getText()
+        }
+      }
+      if(i%%5==0){
+        Sys.sleep(10)
+      }
+    }
+  }
+}
+
+tweets_matrix <- fillMatrixOfTweets()
+########################
+
 for (i in 1:fr_num){  # for 'i' friends
   ttweets <- userTimeline(tfriends[[i]], n=20)  # load 20 tweets from friend 'i'
   db_tweets[[1]][[i]] <- ttweets[[i]]$id  # copy id to col 1
   db_tweets[[2]][[i]] <- ttweets[[i]]$screenName # copy ScreenName to col 2
-  for (j in 1:1)  {
-    db_tweets[[2+j]][[i]] <- ttweets[[j]]$getText()
+  for (j in 1:2)  {
+    if (!ttweets[[j]]$getText()) db_tweets[[2+j]][[i]] <- ttweets[[j]]$getText()
   }
 }
+
+tweets <- list()
+for(i in 1:length(ttweets)){
+  tweets <- c(ttweets[[i]], tweets)
+}
+
+db_tweets <- data.frame ()
+
+
+
+########################
 
 
 db_tweets <- data.frame(id = 1:fr_num, screenName = c(1:fr_num))
@@ -104,5 +148,5 @@ ttweets[[1]]$getCreated() # Tweet date
 ttweets[[1]]$getId()  # Tweet id
 ttweets[[1]]$getScreenName()  # Tweet ScreenName (@ScreenName)
 twitteR::tweet("bip...bip...")  # Tweet
-searchTwitter("http", n=10, since = "2014-06-04") #links search on Tweeter
+searchTwitter("#podemos", geocode = "41.38,2.115,5km", n=70, retryOnRateLimit=1) #links search on Tweeter
 
