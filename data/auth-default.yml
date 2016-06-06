@@ -1,0 +1,6 @@
+# Rename this file as auth.yml
+twitter_auth:
+ consumer_key : CONSUMER_KEY_NUMBER
+ consumer_secret : CONSUMER_SECRET_NUMBER
+ access_token : ACCESS_TOKEN_NUMBER
+ access_secret : ACCESS_SECRET_NUMBER

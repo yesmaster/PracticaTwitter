@@ -1,23 +1,24 @@
-install.packages("twitteR")
-library(twitteR)
+if (!require("twitteR")) {
+  install.packages("twitteR")
+  library("twitteR")
+}
+if (!require("igraph")){
+  install.packages("igraph")
+  library("igraph")
+}
 
-# Twitter authentication configuration
-consumer_key <- NULL
-consumer_secret <- NULL
-access_token <- NULL
-access_token_secret <- NULL
+library("yaml")
+auth = yaml.load_file("data/auth.yml") # Load authentication file
 
-twitter_conf()
-
-#twitter.cnf.path = "data/twitter2.cnf"
-#twitter.cnf <<- NULL
-#twitter.cnf <- yaml::yaml.load_file(twitter.cnf.path)
-
-# Twitter authentication
-twitteR::setup_twitter_oauth(consumer_key,
-                             consumer_secret,
-                             access_token,
-                             access_token_secret)
+consumer_key <- auth$twitter_auth$consumer_key
+consumer_secret <- auth$twitter_auth$consumer_secret
+access_token <- auth$twitter_auth$access_token
+access_secret <- auth$twitter_auth$access_secret
+options(httr_oauth_cache=T) #This will enable the use of a local file to cache OAuth access credentials between R sessions.
+setup_twitter_oauth(consumer_key,
+                    consumer_secret,
+                    access_token,
+                    access_secret)
 
 # User information extraction
 tuser <- twitteR::getUser("yesmastertweet") 
