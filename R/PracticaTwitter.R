@@ -1,38 +1,11 @@
-if (!require("twitteR")) {
-  install.packages("twitteR")
-  library("twitteR")
-}
-if (!require("igraph")){
-  install.packages("igraph")
-  library("igraph")
-}
+loadLibraries()
+tweeterAuthentication()
 
-library("yaml")
-auth = yaml.load_file("data/auth.yml") # Load authentication file
+fillMatrixOfUsers(x = "yesmastertweet")
+tweets_matrix <- fillMatrixOfTweets()
+KeyWordsVector()
 
-consumer_key <- auth$twitter_auth$consumer_key
-consumer_secret <- auth$twitter_auth$consumer_secret
-access_token <- auth$twitter_auth$access_token
-access_secret <- auth$twitter_auth$access_secret
-options(httr_oauth_cache=T) #This will enable the use of a local file to cache OAuth access credentials between R sessions.
-setup_twitter_oauth(consumer_key,
-                    consumer_secret,
-                    access_token,
-                    access_secret)
-
-# User information extraction
-tuser <- twitteR::getUser("yesmastertweet") 
-fr_num <- tuser$getFriendsCount() # num of friends
-fr_ids <- tuser$getFriendIDs() # List of friends IDs
-friends <- friendships(user_ids=fr_ids) # data.frame with friends information
-tfriends <- lookupUsers(friends$name) # tuser structures with friends information 
-
-fol_num <- tuser$getFollowersCount()  # num of followers
-fol_names <- tuser$getFollowers() # List of followers names
-followers <- friendships(user_ids=fol_ids) # data.frame with followers information
-tfollowers <- lookupUsers(followers$name) # followers information extraction
-
-# Store 20 tweets per friend + friend ID + friend ScreenName
+# FUNCTION: Store 20 tweets per friend + friend ID + friend ScreenName
 fillMatrixOfTweets  <- function() {
   mat <- matrix(nrow = fr_num, ncol=4)
   for (i in 1:fr_num){  # for 'i' friends
@@ -45,14 +18,15 @@ fillMatrixOfTweets  <- function() {
           mat[i,j] <- ttweets[[j]]$getText()
         }
       }
-      if(i%%5==0){
-        Sys.sleep(10)
+      if(i%%10==0){
+        Sys.sleep(15*60)
       }
     }
   }
 }
 
-tweets_matrix <- fillMatrixOfTweets()
+# FUNCTION: Search vector of keyworkds among tweets_matrix
+
 
 ##############################################################
 
