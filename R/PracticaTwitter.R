@@ -21,7 +21,7 @@ setup_twitter_oauth(consumer_key,
                     access_secret)
 
 # User information extraction
-tuser <- twitteR::getUser("yesmastertweet") 
+tuser <- twitteR::getUser("MAttack5") 
 fr_num <- tuser$getFriendsCount() # num of friends
 fr_ids <- tuser$getFriendIDs() # List of friends IDs
 friends <- friendships(user_ids=fr_ids) # data.frame with friends information
@@ -29,6 +29,7 @@ tfriends <- lookupUsers(friends$name) # tuser structures with friends informatio
 
 fol_num <- tuser$getFollowersCount()  # num of followers
 fol_names <- tuser$getFollowers() # List of followers names
+fol_ids <- tuser$getFollowerIDs()
 followers <- friendships(user_ids=fol_ids) # data.frame with followers information
 tfollowers <- lookupUsers(followers$name) # followers information extraction
 
@@ -90,3 +91,29 @@ ttweets[[1]]$getScreenName()  # Tweet ScreenName (@ScreenName)
 twitteR::tweet("bip...bip...")  # Tweet
 searchTwitter("#podemos", geocode = "41.38,2.115,5km", n=70, retryOnRateLimit=1) #links search on Tweeter
 
+
+#########################################
+library(plyr)
+
+# Data frame creation
+usersData <- list()
+for(i in 1:fr_num){
+  usersData[[i]] <- data.frame(getUser(tuser$getFollowers()[[i]])$toDataFrame())
+  #usersData[[i]] <- data.frame(getUser(tuser$getFriends()[[i]])$toDataFrame())
+}
+usersFrame <- ldply(usersData, rbind)
+
+getTopFollowers <- function(usersFrame){
+  ordredFrame <- usersFrame[with(usersFrame, order(-followersCount)),]
+  return(data.frame(user = ordredFrame$screenName, followers = ordredFrame$followersCount))
+}
+
+getTopFriends <- function(usersFrame){
+  ordredFrame <- usersFrame[with(usersFrame, order(-friendsCount)),]
+  return(data.frame(user = ordredFrame$screenName, friends = ordredFrame$friendsCount))
+}
+
+getTopTweets <- function(users){
+  ordredFrame <- usersFrame[with(usersFrame, order(-statusesCount)),]
+  return(data.frame(user = ordredFrame$screenName, statuses = ordredFrame$statusesCount))
+}
