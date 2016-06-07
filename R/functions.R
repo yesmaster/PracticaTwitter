@@ -12,6 +12,9 @@ loadLibraries <- function(){
     install.packages("yaml")
     library("yaml")
   } 
+  if (!require("plyr")){
+    library("plyr")
+  }
 }
 
 # FUNCTION: User authentication for Tweeter
@@ -45,6 +48,42 @@ fillMatrixOfUsers <- function(x) {# User information extraction
     tfriends[i] <<- twitteR::getUser(friends[[2]][[i]])
   }
 } 
+
+getFollowersDataFrame <- function(tuser){
+  usersData <- list()
+  f_num <- tuser$getFollowersCount()
+  for(i in 1: f_num){
+    usersData[[i]] <- data.frame(getUser(tuser$getFollowers()[[i]])$toDataFrame())
+  }
+  usersFrame <- ldply(usersData, rbind)
+  return(cbind(usersFrame, friendships(usersFrame$screenName)[4:5]))
+}
+
+getFriendsDataFrame <- function(tuser){
+  usersData <- list()
+  fr_num <- tuser$getFriendsCount()
+  for(i in 1:fr_num){
+    usersData[[i]] <- data.frame(getUser(tuser$getFriends()[[i]])$toDataFrame())
+  }
+  usersFrame <- ldply(usersData, rbind)
+  return(cbind(usersFrame, friendships(usersFrame$screenName)[4:5]))
+}
+
+# Top functions
+getTopFollowers <- function(usersFrame){
+  ordredFrame <- usersFrame[with(usersFrame, order(-followersCount)),]
+  return(data.frame(user = ordredFrame$screenName, followers = ordredFrame$followersCount))
+}
+
+getTopFriends <- function(usersFrame){
+  ordredFrame <- usersFrame[with(usersFrame, order(-friendsCount)),]
+  return(data.frame(user = ordredFrame$screenName, friends = ordredFrame$friendsCount))
+}
+
+getTopTweets <- function(users){
+  ordredFrame <- usersFrame[with(usersFrame, order(-statusesCount)),]
+  return(data.frame(user = ordredFrame$screenName, statuses = ordredFrame$statusesCount))
+}
 
 # FUNCTION: Vector of bad language
 KeyWordsVector <- c("atontado", "baboso", "besugo", "bobo", "burro", "capullo",
