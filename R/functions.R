@@ -15,6 +15,8 @@ loadLibraries <- function(){
   if (!require("plyr")){
     library("plyr")
   }
+  library(ggmap)
+  library(mapproj)
 }
 
 # FUNCTION: User authentication for Tweeter
@@ -83,6 +85,25 @@ getTopFriends <- function(usersFrame){
 getTopTweets <- function(users){
   ordredFrame <- usersFrame[with(usersFrame, order(-statusesCount)),]
   return(data.frame(user = ordredFrame$screenName, statuses = ordredFrame$statusesCount))
+}
+
+# FUNCTION: Store 20 tweets per friend + friend ID + friend ScreenName
+fillMatrixOfTweets  <- function(usersFrame, tweetsNumber) {
+  mat <- matrix(nrow = dim(usersFrame)[1], ncol=tweetsNumber)
+  for (i in 1:dim(usersFrame)[1]){  # for 'i' friends
+    if(!usersFrame$protected[[i]]){
+      ttweets <- userTimeline(usersFrame$screenName[[i]], n=tweetsNumber, includeRts = TRUE)  # load 20 tweets from friend 'i'
+      if(length(ttweets) > 0){
+        for (j in 1:length(ttweets))  {
+          mat[i,j] <- ttweets[[j]]$getText()
+        }
+      }
+      # if(i%%10==0){
+      #    Sys.sleep(15*60)
+      #  }
+    }
+  }
+  return(mat)
 }
 
 # FUNCTION: Vector of bad language

@@ -2,37 +2,18 @@ loadLibraries()
 tweeterAuthentication()
 
 # Data frame creation
-tuser <- twitteR::getUser("MAttack5")
+tuser <- twitteR::getUser("yesmastertweet")
 
+userDataFrame <- getFollowersDataFrame(tuser)
 
-
-
-
-
-
-fillMatrixOfUsers(x = "yesmastertweet")
-tweets_matrix <- fillMatrixOfTweets()
+tweets_matrix <- fillMatrixOfTweets(userDataFrame,4)
 KeyWordsVector()
 
-# FUNCTION: Store 20 tweets per friend + friend ID + friend ScreenName
-fillMatrixOfTweets  <- function() {
-  mat <- matrix(nrow = fr_num, ncol=4)
-  for (i in 1:fr_num){  # for 'i' friends
-    if(!tfriends[[i]]$protected){
-      ttweets <- userTimeline(tfriends[[i]], n=4)  # load 20 tweets from friend 'i'
-      if(length(ttweets) > 0){
-        for (j in 1:length(ttweets))  {
-          print(paste("friend", i, sep= " "))
-          print(paste("tweet", j, length(ttweets), sep= " "))
-          mat[i,j] <- ttweets[[j]]$getText()
-        }
-      }
-      if(i%%10==0){
-        Sys.sleep(15*60)
-      }
-    }
-  }
-}
+
+map <- get_map(location = 'Spain', zoom = 6)
+coordinates <- geocode(userDataFrame$location)
+map <- ggmap(map) + geom_point(data=coordinates, 
+                               aes(x=lon, y=lat), colour="coral1", size=3)
 
 # FUNCTION: Search vector of keyworkds among tweets_matrix
 
