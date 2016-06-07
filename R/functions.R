@@ -114,3 +114,21 @@ KeyWordsVector <- c("atontado", "baboso", "besugo", "bobo", "burro", "capullo",
                     "memo", "mentecato", "pendejo", "percebe", "puto", "puta",
                     "tarado", "tarugo", "tolondron", "tontarrón", "tonto", "torpe",
                     "zángano")
+
+getTweetsDataFrame <- function(textToSearch, geocode, number){
+  tweets<-searchTwitter(textToSearch, geocode = geocode, n=number, retryOnRateLimit=1) #links search on Tweeter
+  tweetsData <- list()
+  for(i in 1:length(tweets)){
+    tweetsData[[i]] <- data.frame(tweets[[i]]$toDataFrame())
+  }
+  return(ldply(tweetsData, rbind))
+}
+
+getUserTweetsDataFrame <- function(user, number){
+  tweets<-userTimeline(user, n=number)
+  tweetsData <- list()
+  for(i in 1:length(tweets)){
+    tweetsData[[i]] <- data.frame(tweets[[i]]$toDataFrame())
+  }
+  return(ldply(tweetsData, rbind))
+}
