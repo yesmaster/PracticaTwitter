@@ -1,28 +1,65 @@
+# Install/Execute needed libraries
 loadLibraries()
-tweeterAuthentication()
+
+# Authenticates user on Tweeter API
+tweeterAuthentication()       
 
 # Data frame creation
 tuser <- twitteR::getUser("yesmastertweet")
 
-userDataFrame <- getFollowersDataFrame(tuser)
+# Analysis of Friends
+friendsDataFrame <- getFriendsDataFrame(tuser)
+friendsTopFollowersOfFriends <- getTopFollowers(friendsDataFrame)
+friendsTopFriendsOfFriends <- getTopFriends(friendsDataFrame)
+friendsTopTweetsOfFriends <- getTopTweets(friendsDataFrame)
+    # Graphs
+        # Compare statistics between Users
+        # Friends following User?
+        # Location
 
-tweets_matrix <- fillMatrixOfTweets(userDataFrame,4)
-KeyWordsVector()
+# Analysis of Followers
+followersDataFrame <- getFollowersDataFrame(tuser)
+followersTopFollowers <- getTopFollowers(followersDataFrame)
+followersTopFriends <- getTopFriends(followersDataFrame)
+followersTopTweets <- getTopTweets(followersDataFrame)
+    # Graphs
+        # Compare statistics between Users
+        # Followers followed by User?
+        # Location
+
+# ¿To be included?: Users in common between 2 different usersDataFrame
+# (compare 2 friendsDataFrame or 2 followersDataFrame)
+
+# Analysis of tweets sent by User
+tweetsOfUserDataFrame <- getUserTweetsDataFrame(user, 10)
+    # Graph: evolution of tweets in time
+
+# Analysis of tweets sent from Spain with defined hashtag
+tweetsDataFrame <- getTweetsDataFrame("#hola", "40.418,-3.706,700km", 
+                                      number=10, retryOnRateLimit=1)
+
+    # To be included: Analysis of Keywords among tweets sent from Spain
+    KeyWords()
+    
+    # ¿¿To be included??: Location of tweets sent from Spain
 
 
-map <- get_map(location = 'Spain', zoom = 6)
-coordinates <- geocode(userDataFrame$location)
-map <- ggmap(map) + geom_point(data=coordinates, 
-                               aes(x=lon, y=lat), colour="coral1", size=3)
+# FUNCTION: Paint location on Spain map
+mapLocations <- function(usersDataFrame)  {
+  map <- get_map(location = 'Spain', zoom = 6)
+  coordinates <- geocode(userDataFrame$location)
+  map <- ggmap(map) + geom_point(data=coordinates, aes(x=lon, y=lat),
+                                 colour="coral1", size=3)
+}
+
 
 # FUNCTION: Search vector of keyworkds among tweets_matrix
+# To be included
+
+
 
 
 ##############################################################
-
-# Search friends & friends of friends -> create a tree
-# Look for a user, its friends, their tweets, search a key word & extract results
-# Location??
 
 # User information extraction
 tuser <- twitteR::getUser("yesmastertweet") 
@@ -53,5 +90,3 @@ ttweets[[1]]$getId()  # Tweet id
 ttweets[[1]]$getScreenName()  # Tweet ScreenName (@ScreenName)
 twitteR::tweet("bip...bip...")  # Tweet
 searchTwitter("#podemos", geocode = "41.38,2.115,5km", n=70, retryOnRateLimit=1) #links search on Tweeter
-
-

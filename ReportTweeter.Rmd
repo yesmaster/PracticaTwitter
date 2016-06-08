@@ -1,0 +1,35 @@
+---
+title: "Análisis del impacto en Twitter: PP y PSOE"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Objetivo
+Blablabla **PSOE** (<https://twitter.com/PSOE>) y **PP** (<https://twitter.com/PPopular>).
+
+
+## Los contactos
+### Following
+Blablabla.
+```{r code "Siguiendo..."}
+summary(cars)
+```
+
+Blablabla.
+```{r grafico, echo=FALSE}
+plot(pressure)
+```
+
+### Followers
+Blablabla.
+
+```{r Gráfico "Seguidores...."}
+cache = TRUE # Keep result in cache
+
+```
+
+
+*Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.*
