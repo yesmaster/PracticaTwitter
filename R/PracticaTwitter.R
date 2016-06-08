@@ -12,9 +12,9 @@ friendsDataFrame <- getFriendsDataFrame(tuser)
 friendsTopFollowersOfFriends <- getTopFollowers(friendsDataFrame)
 friendsTopFriendsOfFriends <- getTopFriends(friendsDataFrame)
 friendsTopTweetsOfFriends <- getTopTweets(friendsDataFrame)
-    # Graphs
-        # Compare statistics between Users
-        # Friends following User?
+  # Table with information  
+  # Graphs
+        # Include?: Friends following User
         # Location
 
 # Analysis of Followers

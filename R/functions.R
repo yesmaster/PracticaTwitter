@@ -45,6 +45,10 @@ getFollowersDataFrame <- function(tuser){
   f_num <- tuser$getFollowersCount()
   for(i in 1: f_num){
     usersData[[i]] <- data.frame(getUser(tuser$getFollowers()[[i]])$toDataFrame())
+    if(i%%10==0){
+      print(i)
+      Sys.sleep(15*60) # 15 min pause due to Twitter restrictions
+    }
   }
   usersFrame <- ldply(usersData, rbind)
   return(cbind(usersFrame, friendships(usersFrame$screenName)[4:5]))
@@ -56,7 +60,11 @@ getFriendsDataFrame <- function(tuser){
   fr_num <- tuser$getFriendsCount()
   for(i in 1:fr_num){
     usersData[[i]] <- data.frame(getUser(tuser$getFriends()[[i]])$toDataFrame())
-  }
+    if(i%%10==0){
+      print(i)
+      Sys.sleep(15*60)  # 15 min pause due to Twitter restrictions
+    }
+    }
   usersFrame <- ldply(usersData, rbind)
   return(cbind(usersFrame, friendships(usersFrame$screenName)[4:5]))
 }
