@@ -3,74 +3,105 @@ title: 'Análisis del impacto en Twitter: PP y PSOE'
 output: html_document
 ---
 
-```{r setup, include=FALSE, cache = TRUE}
+```{r Setup, include=FALSE, cache = TRUE}
 knitr::opts_chunk$set(echo = TRUE)
 
 # Install/Execute needed libraries
-#loadLibraries()
+loadLibraries()
 
 # Authenticates user on Tweeter API
-#tweeterAuthentication() 
+tweeterAuthentication() 
 ```
 
 ## Objetivo
-La intensa actividad en las redes sociales las ha convertido en fuentes de grandes volúmenes de información. En caso de Twitter, la extracción y análisis de los datos propios de usuarios y sus mensajes, nos permitirá obtener múltiples y variados resultados estadísticos.
-En este sentido y el marco de unas cercanas elecciones epañolas, a continuación se pretende realizar un análisis de las cuentas de twitter oficiales de los partídos políticos  **PSOE** (<https://twitter.com/PSOE>) y **PP** (<https://twitter.com/PPopular>).
+La intensa actividad en las redes sociales las ha convertido en fuentes de grandes volúmenes de información. En caso de Twitter, la extracción y análisis de los datos propios de usuarios y sus mensajes, nos permitirá obtener múltiples resultados estadísticos.
+En este sentido y el marco de unas cercanas elecciones epañolas, se pretende realizar un análisis de los datos que se pueden obtener a partir de la cuenta de twitter oficial de los partídos políticos.
 
 
 ## Los contactos
-Realizamos la monitorización tanto de los usuarios a los que **PSOE** y **PP** siguen (*friends*), como de los usuarios que les siguen a ellos (*Followers*).
-El análisis se realiza sobre una muestra de 100 usuarios de cada partido, a pesar de que la realidad es mucho mayor. El motivo es la restricción que impone Tweeter para las consultas realizadas a través de API, limitadas a un máximo de 180 cada 15 minutos.
+Se inicia el estudio ralizando una monitorización de los usuarios que siguen (*Followers*) a un partido político: el **PP** (<https://twitter.com/PPopular>).
+El análisis se realiza sobre una muestra de 100 usuarios, a pesar de que la realidad es mucho mayor. El motivo es la restricción que impone Tweeter para las consultas realizadas a través de API, limitadas a un máximo de 180 cada 15 minutos.
 
-### Friends
-Obtenemos un *data frame* con los datos de 100 *friends* del PSOE y del PP:
-```{r, cache = TRUE}
-# PSOE and PP data frames with own data
-tuserPsoe <- twitteR::getUser("PSOE")
+### Extracción de información
+Obtenemos un conjunto *data frame* con los datos de 100 *Followers* del PP:
+```{r Extraction, eval=FALSE, cache=TRUE, include=FALSE}
+# Data frames with PP profile information
 tuserPp <- twitteR::getUser("PP")
 
-# PSOE and PP data frames with their friends data
-friendsDataFramePsoe <- getFriendsDataFrame(tuserPsoe)
+# PP data frames with information of 100 friends
 friendsDataFramePp <- getFriendsDataFrame(tuserPp)
 ```
-Inicialmente, tratamos de analizar la actividad de los principausuarios analizados.
-```{r}
-# PSOE friends analysis
-friendsTopFollowersOfFriendsPsoe <- getTopFollowers(friendsDataFramePsoe)
-friendsTopFriendsOfFriendsPsoe <- getTopFriends(friendsDataFramePsoe)
-friendsTopTweetsOfFriendsPsoe <- getTopTweets(friendsDataFramePsoe)
 
+### Ránking de principales usuarios
+Inicialmente, tratamos de analizar la actividad de los principales *Followers*.
+```{r Ranking, echo=TRUE}
 # PSOE friends analysis
+#friendsTopFollowersOfFriendsPsoe <- getTopFollowers(friendsDataFramePsoe)
+#friendsTopFriendsOfFriendsPsoe <- getTopFriends(friendsDataFramePsoe)
+#friendsTopTweetsOfFriendsPsoe <- getTopTweets(friendsDataFramePsoe)
+
+# PP friends analysis
 friendsTopFollowersOfFriendsPp <- getTopFollowers(friendsDataFramePp)
 friendsTopFriendsOfFriendsPp <- getTopFriends(friendsDataFramePp)
 friendsTopTweetsOfFriendsPp <- getTopTweets(friendsDataFramePp)
 ```
 
-Resultados que visualizamos en la siguiente tabla:
-```{r Table}
-print( tableTopUsers, type = "html")
+De este modo, en la siguiente tabla visualizamos los resultados de los usuarios que siguen a un mayor número de *Friends*, son más seguidos por *Followers* y son más activos en el envío de twits. 
+```{r Table, echo=FALSE}
+# Table print
 
 ```
 
-Mediante la situación geográfica de los usuarios de ambos partidos, podemos observar su distribución sobre el territorio.
-```{r, echo=FALSE}
-mapLocations(friendsDataFramePsoe)
+### Análisis de actividad en la red
+Adicionalmente, podemos calcular la distribución de los usuarios en función de su nivel de actividad en la red
+```{r GraphDistribution, echo=FALSE}
+# Graph distribution of "Num of Users"" vs "Num of Tweets""
+
+```
+
+### Geolocalización
+Finalmente, mediante de la ubicación de los usuarios, podemos observar su distribución geográfica sobre el territorio.
+```{r GraphGeo, echo=FALSE}
+# Map with PP Followers
 mapLocations(friendsDataFramePp)
 
 ```
 
-### Followers
-Los mismos análisi se pueden realizar para los *Followers*.
+Del mismo modo, se obtienen los datos de del **PSOE** y se realiza una comparativa de la distribución geográfica entre los *Followers* de **PP** y **PSOE**.
+```{r GraphGeo2, echo=FALSE}
+# Map with PP Followers
+mapLocations(friendsDataFramePsoe)
 
-```{r Gráfico "Seguidores...."}
-cache = TRUE # Keep result in cache
+```
+
+
+## Los Tweets
+Es posible extender el análisis a los mensajes (*Tweets*) enviados por los perfiles de usuario de los partidos políticos.
+```{r Tweets}
+tweetsOfUserDataFramePsoe <- getUserTweetsDataFrame(tuserPsoe, 200)
+tweetsOfUserDataFramePp <- getUserTweetsDataFrame(tuserPp, 200)
+
+```
+
+De este modo, es posible obtener los instantes de mayor actividad y comparar la cantidad de mensajes enviados entre los usuarios **PP** y **PSOE**.
+```{r, echo=FALSE}
+# Graphs of activity
+
+```
+
+
+A nivel de actividad global de red, se analizan los últimos 100 *Tweets* que tratan sobre el **PP** o el **PSOE** enviados dentro del territorio español.
+```{r}
+tweetsDataFramePsoe <- getTweetsDataFrame("PSOE", "40.418,-3.706,700km", 
+                                      number=100, retryOnRateLimit=1)
+tweetsDataFramePp <- getTweetsDataFrame("PP", "40.418,-3.706,700km", 
+                                      number=100, retryOnRateLimit=1)
+```
+
+A partir de los *Tweets* obtenidos sobre los diferentes partidos políticos, es posible analizar su contenido. De este modo, se estudia cuál de los hilos temáticos correspondientes usa un peor tono e incluye un mayor número de palabrotas.  
+```{r}
 
 ```
 
 
 
-## Los Twits
-Bla bla
-
-
-*Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.*

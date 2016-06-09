@@ -42,12 +42,13 @@ tweeterAuthentication <- function(){
 # FUNCTION: Data Frame creation with information of Followers from "tuser"
 getFollowersDataFrame <- function(tuser){
   usersData <- list()
-  f_num <- tuser$getFollowersCount()
-  for(i in 1: f_num){
+  #f_num <- tuser$getFollowersCount()
+  f_num <- 6
+  for(i in 1:f_num){
     usersData[[i]] <- data.frame(getUser(tuser$getFollowers()[[i]])$toDataFrame())
-    if(i%%10==0){
-      print(i)
-      Sys.sleep(15*60) # 15 min pause due to Twitter restrictions
+    print(i)
+    if(i%%2==0){
+      Sys.sleep(2*60) # 15 min pause due to Twitter restrictions
     }
   }
   usersFrame <- ldply(usersData, rbind)
@@ -57,14 +58,15 @@ getFollowersDataFrame <- function(tuser){
 # FUNCTION: Data Frame creation with information of Friends from "tuser"
 getFriendsDataFrame <- function(tuser){
   usersData <- list()
-  fr_num <- tuser$getFriendsCount()
+  #fr_num <- tuser$getFriendsCount()
+  fr_num <- 10
   for(i in 1:fr_num){
     usersData[[i]] <- data.frame(getUser(tuser$getFriends()[[i]])$toDataFrame())
-    if(i%%10==0){
-      print(i)
-      Sys.sleep(15*60)  # 15 min pause due to Twitter restrictions
+    print(i)
+    if(i%%11==0){
+      Sys.sleep(16*60)  # 15 min pause due to Twitter restrictions
     }
-    }
+  }
   usersFrame <- ldply(usersData, rbind)
   return(cbind(usersFrame, friendships(usersFrame$screenName)[4:5]))
 }
@@ -86,33 +88,14 @@ getTopTweets <- function(usersFrame){
   return(data.frame(user = ordredFrame$screenName, statuses = ordredFrame$statusesCount))
 }
 
-# FUNCTION: Store "tweetsNumber" tweets per friend + friend ID + friend ScreenName
-fillMatrixOfTweets  <- function(usersFrame, tweetsNumber) {
-  mat <- matrix(nrow = dim(usersFrame)[1], ncol=tweetsNumber)
-  for (i in 1:dim(usersFrame)[1]){  # for 'i' friends
-    if(!usersFrame$protected[[i]]){
-      ttweets <- userTimeline(usersFrame$screenName[[i]], n=tweetsNumber, includeRts = TRUE)  # load 20 tweets from friend 'i'
-      if(length(ttweets) > 0){
-        for (j in 1:length(ttweets))  {
-          mat[i,j] <- ttweets[[j]]$getText()
-        }
-      }
-      # if(i%%10==0){
-      #    Sys.sleep(15*60)
-      #  }
-    }
-  }
-  return(mat)
-}
-
-# FUNCTION: Data Frame cration with "number" Tweets from a "user"
+# FUNCTION: Data Frame creation with "number" Tweets from a "user"
 getUserTweetsDataFrame <- function(user, number)  {
-  tweets<-userTimeline(user, n=number)
+  tweets<-userTimeline(user, n=number, includeRts = TRUE)
   tweetsData <- list()
   for(i in 1:length(tweets)){
     tweetsData[[i]] <- data.frame(tweets[[i]]$toDataFrame())
     print(i)
-    if(i%%10==0){
+    if(i%%11==0){
         Sys.sleep(15*60)
     }
   }
