@@ -42,7 +42,7 @@ tweeterAuthentication <- function(){
 # FUNCTION: Data Frame creation with information of Followers from "tuser"
 getFollowersDataFrame <- function(tuser){
   usersData <- list()
-  CONST_FNUM <- 10
+  CONST_FNUM <- 4
   followers <- tuser$getFollowers(n = CONST_FNUM)
   for(i in 1: length(followers)){
     usersData[[i]] <- data.frame(getUser(followers[[i]])$toDataFrame())
@@ -54,7 +54,7 @@ getFollowersDataFrame <- function(tuser){
 # FUNCTION: Data Frame creation with information of Friends from "tuser"
 getFriendsDataFrame <- function(tuser){
   usersData <- list()
-  CONST_FRNUM <- 10
+  CONST_FRNUM <- 6
   friends <- tuser$getFriends(CONST_FRNUM)
   for(i in 1:length(friends)){
     usersData[[i]] <- data.frame(getUser(friends[[i]])$toDataFrame())

@@ -6,8 +6,8 @@ tweeterAuthentication()
 
 # Data frame creation
 tuser <- twitteR::getUser("yesmastertweet")
-tuserPp <- twitteR::getUser("marianorajoy")
-tuserPsoe <- twitteR::getUser("sanchezcastejon")
+tuserPp <- twitteR::getUser("Ppopular")
+tuserPsoe <- twitteR::getUser("PSOE")
 
 # Analysis of Friends
 friendsDataFrame <- getFriendsDataFrame(tuser)
@@ -16,7 +16,9 @@ friendsTopFriendsOfFriends <- getTopFriends(friendsDataFrame)
 friendsTopTweetsOfFriends <- getTopTweets(friendsDataFrame)
   # Graphs
   # Distribution of users according activity
-  hist(friendsDataFrame$statusesCount, col = "blue", breaks = 10)
+  library()
+  par(mar = rep(2,4))
+  hist(friendsDataFrame$statusesCount, col = "blue", breaks = 100)
   # Table with Tops information 
   library(xtable)
   table <- cbind(head(friendsTopFollowersOfFriends, n=3), 
