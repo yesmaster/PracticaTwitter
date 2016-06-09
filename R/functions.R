@@ -1,30 +1,13 @@
-# FUNCTION: Load libraries to use
-loadLibraries <- function(){
-  if (!require("twitteR")) {
-    install.packages("twitteR")
-    library("twitteR")
-  }
-  if (!require("igraph")){
-    install.packages("igraph")
-    library("igraph")
-  }
-  if (!require("yaml")){
-    install.packages("yaml")
-    library("yaml")
-  } 
-  if (!require("plyr")){
-    library("plyr")
-  }
-  if (!require("ggmap")){
-    library("ggmap")
-  }  
-  if (!require("mapproj")){
-    library("mapproj")
-  }  
-}
 
-# FUNCTION: User authentication on the Tweeter API
-tweeterAuthentication <- function(){
+#' Title twitterAuthentication
+#' 
+#' User authentication on the Twitter API
+#'
+#' @return
+#' @export
+#'
+#' @examples
+twitterAuthentication <- function(){
   auth = yaml :: yaml.load_file("data/auth.yml") # Load authentication config file
   
   consumer_key <- auth$twitter_auth$consumer_key
@@ -39,7 +22,17 @@ tweeterAuthentication <- function(){
                       access_token_secret)
 }
 
-# FUNCTION: Data Frame creation with information of Followers from "tuser"
+
+#' Title getFollowersDataFrame
+#' 
+#' Data Frame creation with information of Followers from "tuser"
+#'
+#' @param tuser 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 getFollowersDataFrame <- function(tuser){
   usersData <- list()
   CONST_FNUM <- 4
@@ -51,7 +44,17 @@ getFollowersDataFrame <- function(tuser){
   return(cbind(usersFrame, friendships(usersFrame$screenName)[4:5]))
 }
 
-# FUNCTION: Data Frame creation with information of Friends from "tuser"
+
+#' Title getFriendsDataFrame
+#' 
+#' Data Frame creation with information of Friends from "tuser"
+#'
+#' @param tuser 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 getFriendsDataFrame <- function(tuser){
   usersData <- list()
   CONST_FRNUM <- 6
@@ -63,24 +66,66 @@ getFriendsDataFrame <- function(tuser){
   return(cbind(usersFrame, friendships(usersFrame$screenName)[4:5]))
 }
 
-# FUNCTIONS: Top results from a users Data Frame
-# Most popular users
+
+#' Title getTopFollowers
+#' 
+#' Top results from a users Data Frame (Most popular users)
+#'
+#' @param usersFrame 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 getTopFollowers <- function(usersFrame){
   ordredFrame <- usersFrame[with(usersFrame, order(-followersCount)),]
   return(data.frame(user = ordredFrame$screenName, followers = ordredFrame$followersCount))
 }
-# Most follower users
+
+
+#' Title getTopFriends
+#' 
+#' Most follower users
+#'
+#' @param usersFrame 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 getTopFriends <- function(usersFrame){
   ordredFrame <- usersFrame[with(usersFrame, order(-friendsCount)),]
   return(data.frame(user = ordredFrame$screenName, friends = ordredFrame$friendsCount))
 }
-# Most active users
+
+
+#' Title getTopTweets
+#' 
+#' Most active users
+#'
+#' @param usersFrame 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 getTopTweets <- function(usersFrame){
   ordredFrame <- usersFrame[with(usersFrame, order(-statusesCount)),]
   return(data.frame(user = ordredFrame$screenName, statuses = ordredFrame$statusesCount))
 }
 
-# FUNCTION: Store 20 tweets per friend + friend ID + friend ScreenName
+
+#' Title fillMatrixOfTweets
+#' 
+#' Store 20 tweets per friend + friend ID + friend ScreenName
+#'
+#' @param usersFrame 
+#' @param tweetsNumber 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 fillMatrixOfTweets  <- function(usersFrame, tweetsNumber) {
   mat <- matrix(nrow = dim(usersFrame)[1], ncol=tweetsNumber)
   for (i in 1:dim(usersFrame)[1]){  # for 'i' friends
@@ -99,7 +144,18 @@ fillMatrixOfTweets  <- function(usersFrame, tweetsNumber) {
   return(mat)
 }
 
-# FUNCTION: Data Frame creation with "number" Tweets from a "user"
+
+#' Title getUserTweetsDataFrame
+#' 
+#' Data Frame creation with "number" Tweets from a "user"
+#'
+#' @param user 
+#' @param number 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 getUserTweetsDataFrame <- function(user, number)  {
   tweets<-userTimeline(user, n=number, includeRts = TRUE)
   tweetsData <- list()
@@ -113,8 +169,19 @@ getUserTweetsDataFrame <- function(user, number)  {
   return(ldply(tweetsData, rbind))
 }
 
-# FUNCTION: Data Frame cration with "number" tweets including "textToSeach"
-# sent by users within "geocode" locations
+
+#' Title getTweetsDataFrame
+#' 
+#' Data Frame cration with "number" tweets including "textToSeach" sent by users within "geocode" locations
+#'
+#' @param textToSearch 
+#' @param geocode 
+#' @param number 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 getTweetsDataFrame <- function(textToSearch, geocode, number){
   tweets<-searchTwitter(textToSearch, geocode = geocode, n=number, retryOnRateLimit=1) #links search on Tweeter
   tweetsData <- list()
@@ -124,17 +191,15 @@ getTweetsDataFrame <- function(textToSearch, geocode, number){
   return(ldply(tweetsData, rbind))
 }
 
-getTweetsWithKeyword <- function(tweetsDataFrame, keyWordsList){
-  resTweets <- list()
-  matches <- lapply(tweetsDataFrame$text, function(i) grep(pattern = paste("*",keyWordsList[i],"*"), tweet, ignore.case = TRUE))
-  print(matches)
-  Sys.sleep(time = 5)
-  if(length(matches)>1){
-    print("Match!")      
-  }
-  return(resTweets)
-}
-
+#' Title getTweetsWithKeyword
+#'
+#' @param tweetsDataFrame 
+#' @param keyWordsList 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 getTweetsWithKeyword <- function(tweetsDataFrame, keyWordsList){
   resTweets <- data.frame()
   for(tweet in tweetsDataFrame$text){
@@ -154,17 +219,52 @@ getTweetsWithKeyword <- function(tweetsDataFrame, keyWordsList){
   return(resTweets)
 }
 
+#' Title plotReciprocalFollowsGraph
+#'
+#' @param me 
+#' @param userDataFrame 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 plotReciprocalFollowsGraph <- function(me, userDataFrame){
   v1 <- vector()
   v2 <- vector()
   for (i in 1:dim(userDataFrame)[1]) {
     row <- userDataFrame[i,]
-    print(row$following)
     if(row$following == TRUE && row$followed_by == TRUE){
       v1 <- c(me$name, row$screenName, v1)
       v2 <- c(row$screenName, me$name, v2)
     }
   }
-  reciprocalGraph <- graph.data.frame(data.frame(v1 = v1, v2 = v2))
-  plot(reciprocalGraph)
+  if(length(v1) > 0 && length(v2) > 0){
+    reciprocalGraph <- graph.data.frame(data.frame(v1 = v1, v2 = v2))
+    plot(reciprocalGraph)
+  }
+  else return("NA")
 }
+
+
+
+#' Title mapLocations
+#'
+#' @param ... 
+#' @param colours 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+mapLocations <- function(..., colours)  {
+  dataFrames <- list(...)
+  map <- get_map(location = 'Spain', zoom = 6)
+  map <- ggmap(map)
+  for(i in 1:length(dataFrames)){
+    coordinates <- geocode(dataFrames[[i]]$location)
+    geom <- geom_point(data=coordinates, aes(x=lon, y=lat), colour=colours[i], size=3)
+    map <- map + geom
+  }
+  map
+}
+
