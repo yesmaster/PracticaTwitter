@@ -126,16 +126,45 @@ getTweetsDataFrame <- function(textToSearch, geocode, number){
 
 getTweetsWithKeyword <- function(tweetsDataFrame, keyWordsList){
   resTweets <- list()
+  matches <- lapply(tweetsDataFrame$text, function(i) grep(pattern = paste("*",keyWordsList[i],"*"), tweet, ignore.case = TRUE))
+  print(matches)
+  Sys.sleep(time = 5)
+  if(length(matches)>1){
+    print("Match!")      
+  }
+  return(resTweets)
+}
+
+getTweetsWithKeyword <- function(tweetsDataFrame, keyWordsList){
+  resTweets <- data.frame()
   for(tweet in tweetsDataFrame$text){
-    matches <- lapply(tweetsDataFrame$text, function(i) grep(pattern = paste("*",keyWordsList[i],"*"), tweet, ignore.case = TRUE))
-    print(matches)
-    for(i in 1:length(matches)){
-      if(matches[i] == TRUE){
-        
+    wordsFound <- list()
+    for(keyWord in keyWordsList){
+      regExp <- paste("*",keyWord,"*")
+      res <- grep(pattern = regExp, tweet, ignore.case = TRUE)
+      if(length(res)>0){
+        #print(paste("Match with ", keyWord, " ", tweet, sep = ""))
+        wordsFound <- c(wordsFound, keyWord)
       }
+    }
+    if(length(wordsFound)>0){
+      resTweets <- rbind(resTweets, data.frame(tweet = tweet, number = length(wordsFound)))
     }
   }
   return(resTweets)
 }
 
-
+plotReciprocalFollowsGraph <- function(me, userDataFrame){
+  v1 <- vector()
+  v2 <- vector()
+  for (i in 1:dim(userDataFrame)[1]) {
+    row <- userDataFrame[i,]
+    print(row$following)
+    if(row$following == TRUE && row$followed_by == TRUE){
+      v1 <- c(me$name, row$screenName, v1)
+      v2 <- c(row$screenName, me$name, v2)
+    }
+  }
+  reciprocalGraph <- graph.data.frame(data.frame(v1 = v1, v2 = v2))
+  plot(reciprocalGraph)
+}
