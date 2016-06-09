@@ -53,9 +53,10 @@ fillMatrixOfUsers <- function(x) {# User information extraction
 
 getFollowersDataFrame <- function(tuser){
   usersData <- list()
-  f_num <- tuser$getFollowersCount()
-  for(i in 1: f_num){
-    usersData[[i]] <- data.frame(getUser(tuser$getFollowers()[[i]])$toDataFrame())
+  CONST_FNUM <- 10
+  followers <- tuser$getFollowers(n = CONST_FNUM)
+  for(i in 1: length(followers)){
+    usersData[[i]] <- data.frame(getUser(followers[[i]])$toDataFrame())
   }
   usersFrame <- ldply(usersData, rbind)
   return(cbind(usersFrame, friendships(usersFrame$screenName)[4:5]))
@@ -63,9 +64,10 @@ getFollowersDataFrame <- function(tuser){
 
 getFriendsDataFrame <- function(tuser){
   usersData <- list()
-  fr_num <- tuser$getFriendsCount()
-  for(i in 1:fr_num){
-    usersData[[i]] <- data.frame(getUser(tuser$getFriends()[[i]])$toDataFrame())
+  CONST_FRNUM <- 10
+  friends <- tuser$getFriends(CONST_FRNUM)
+  for(i in 1:length(friends)){
+    usersData[[i]] <- data.frame(getUser(friends[[i]])$toDataFrame())
   }
   usersFrame <- ldply(usersData, rbind)
   return(cbind(usersFrame, friendships(usersFrame$screenName)[4:5]))
@@ -106,15 +108,6 @@ fillMatrixOfTweets  <- function(usersFrame, tweetsNumber) {
   return(mat)
 }
 
-# FUNCTION: Vector of bad language
-KeyWordsVector <- c("atontado", "baboso", "besugo", "bobo", "burro", "capullo",
-                    "cazurro", "ceporro", "cenutrio", "cipote", "cretino",
-                    "cutre", "chorra", "estúpido", "ganso", "gilipollas",
-                    "idiota", "lerdo", "malparido", "marica", "maricon",
-                    "memo", "mentecato", "pendejo", "percebe", "puto", "puta",
-                    "tarado", "tarugo", "tolondron", "tontarrón", "tonto", "torpe",
-                    "zángano")
-
 getTweetsDataFrame <- function(textToSearch, geocode, number){
   tweets<-searchTwitter(textToSearch, geocode = geocode, n=number, retryOnRateLimit=1) #links search on Tweeter
   tweetsData <- list()
@@ -132,3 +125,19 @@ getUserTweetsDataFrame <- function(user, number){
   }
   return(ldply(tweetsData, rbind))
 }
+
+getTweetsWithKeyword <- function(tweetsDataFrame, keyWordsList){
+  resTweets <- list()
+  for(tweet in tweetsDataFrame$text){
+    matches <- lapply(tweetsDataFrame$text, function(i) grep(pattern = paste("*",keyWordsList[i],"*"), tweet, ignore.case = TRUE))
+    print(matches)
+    for(i in 1:length(matches)){
+      if(matches[i] == TRUE){
+        
+      }
+    }
+  }
+  return(resTweets)
+}
+
+
