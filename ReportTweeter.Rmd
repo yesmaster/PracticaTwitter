@@ -3,6 +3,158 @@ title: 'Análisis del impacto en Twitter: PP y PSOE'
 output: html_document
 ---
 
+```{r, include=FALSE}
+# FUNCTION: Load libraries to use
+loadLibraries <- function(){
+  if (!require("twitteR")) {
+    install.packages("twitteR")
+    library("twitteR")
+  }
+  if (!require("igraph")){
+    install.packages("igraph")
+    library("igraph")
+  }
+  if (!require("yaml")){
+    install.packages("yaml")
+    library("yaml")
+  } 
+  if (!require("plyr")){
+    library("plyr")
+  }
+  if (!require("ggmap")){
+    library("ggmap")
+  }  
+  if (!require("mapproj")){
+    library("mapproj")
+  }  
+}
+
+# FUNCTION: User authentication on the Tweeter API
+tweeterAuthentication <- function(){
+  auth = yaml :: yaml.load_file("data/auth.yml") # Load authentication config file
+  
+  consumer_key <- auth$twitter_auth$consumer_key
+  consumer_secret <- auth$twitter_auth$consumer_secret
+  access_token <- auth$twitter_auth$access_token
+  access_token_secret <- auth$twitter_auth$access_token_secret
+  
+  options(httr_oauth_cache=T) # Enables cache OAuth access credentials between R sessions
+  setup_twitter_oauth(consumer_key,
+                      consumer_secret,
+                      access_token,
+                      access_token_secret)
+}
+
+# FUNCTION: Data Frame creation with information of Followers from "tuser"
+getFollowersDataFrame <- function(tuser){
+  usersData <- list()
+  CONST_FNUM <- 4
+  followers <- tuser$getFollowers(n = CONST_FNUM)
+  for(i in 1: length(followers)){
+    usersData[[i]] <- data.frame(getUser(followers[[i]])$toDataFrame())
+  }
+  usersFrame <- ldply(usersData, rbind)
+  return(cbind(usersFrame, friendships(usersFrame$screenName)[4:5]))
+}
+
+# FUNCTION: Data Frame creation with information of Friends from "tuser"
+getFriendsDataFrame <- function(tuser){
+  usersData <- list()
+  CONST_FRNUM <- 10
+  friends <- tuser$getFriends(CONST_FRNUM)
+  for(i in 1:length(friends)){
+    usersData[[i]] <- data.frame(getUser(friends[[i]])$toDataFrame())
+  }
+  usersFrame <- ldply(usersData, rbind)
+  return(cbind(usersFrame, friendships(usersFrame$screenName)[4:5]))
+}
+
+# FUNCTIONS: Top results from a users Data Frame
+# Most popular users
+getTopFollowers <- function(usersFrame){
+  ordredFrame <- usersFrame[with(usersFrame, order(-followersCount)),]
+  return(data.frame(user = ordredFrame$screenName, followers = ordredFrame$followersCount))
+}
+# Most follower users
+getTopFriends <- function(usersFrame){
+  ordredFrame <- usersFrame[with(usersFrame, order(-friendsCount)),]
+  return(data.frame(user = ordredFrame$screenName, friends = ordredFrame$friendsCount))
+}
+# Most active users
+getTopTweets <- function(usersFrame){
+  ordredFrame <- usersFrame[with(usersFrame, order(-statusesCount)),]
+  return(data.frame(user = ordredFrame$screenName, statuses = ordredFrame$statusesCount))
+}
+
+# FUNCTION: Store 20 tweets per friend + friend ID + friend ScreenName
+fillMatrixOfTweets  <- function(usersFrame, tweetsNumber) {
+  mat <- matrix(nrow = dim(usersFrame)[1], ncol=tweetsNumber)
+  for (i in 1:dim(usersFrame)[1]){  # for 'i' friends
+    if(!usersFrame$protected[[i]]){
+      ttweets <- userTimeline(usersFrame$screenName[[i]], n=tweetsNumber, includeRts = TRUE)  # load 20 tweets from friend 'i'
+      if(length(ttweets) > 0){
+        for (j in 1:length(ttweets))  {
+          mat[i,j] <- ttweets[[j]]$getText()
+        }
+      }
+      # if(i%%10==0){
+      #    Sys.sleep(15*60)
+      #  }
+    }
+  }
+  return(mat)
+}
+
+# FUNCTION: Data Frame creation with "number" Tweets from a "user"
+getUserTweetsDataFrame <- function(user, number)  {
+  tweets<-userTimeline(user, n=number, includeRts = TRUE)
+  tweetsData <- list()
+  for(i in 1:length(tweets)){
+    tweetsData[[i]] <- data.frame(tweets[[i]]$toDataFrame())
+    print(i)
+    if(i%%11==0){
+        Sys.sleep(15*60)
+    }
+  }
+  return(ldply(tweetsData, rbind))
+}
+
+# FUNCTION: Data Frame cration with "number" tweets including "textToSeach"
+# sent by users within "geocode" locations
+getTweetsDataFrame <- function(textToSearch, geocode, number){
+  tweets<-searchTwitter(textToSearch, geocode = geocode, n=number, retryOnRateLimit=1) #links search on Tweeter
+  tweetsData <- list()
+  for(i in 1:length(tweets)){
+    tweetsData[[i]] <- data.frame(tweets[[i]]$toDataFrame())
+  }
+  return(ldply(tweetsData, rbind))
+}
+
+getTweetsWithKeyword <- function(tweetsDataFrame, keyWordsList){
+  resTweets <- list()
+  for(tweet in tweetsDataFrame$text){
+    matches <- lapply(tweetsDataFrame$text, function(i) grep(pattern = paste("*",keyWordsList[i],"*"), tweet, ignore.case = TRUE))
+    print(matches)
+    for(i in 1:length(matches)){
+      if(matches[i] == TRUE){
+        
+      }
+    }
+  }
+  return(resTweets)
+}
+
+# FUNCTION: Paint location on Spain map
+mapLocations <- function(usersDataFrame)  {
+  map <- get_map(location = 'Spain', zoom = 6)
+  coordinates <- geocode(usersDataFrame$location)
+  map <- ggmap(map) + geom_point(data=coordinates, aes(x=lon, y=lat),
+                                 colour="blue", size=3)
+  map
+}
+
+```
+
 
 ```{r Setup, cache=TRUE, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -25,9 +177,14 @@ El análisis se realiza sobre una muestra de 10 usuarios, a pesar de que la real
 
 ### Extracción de información
 Primeramente se obtiene un conjunto *data frame* con los datos de 10 *Followers* del PP:
-```{r Extraction, eval=FALSE, cache=TRUE, include=FALSE}
+```{r Extraction, cache=TRUE,  echo=TRUE}
+library("twitteR")
+library("plyr")
+tweeterAuthentication() 
+
+
 # Data frames with PP profile information
-tuserPp <- twitteR::getUser("PPopular")
+tuserPp <- getUser("PPopular")
 
 # PP data frames with information of 10 friends
 followersDataFramePp <- getFollowersDataFrame(tuserPp)
@@ -35,70 +192,105 @@ followersDataFramePp <- getFollowersDataFrame(tuserPp)
 
 ### Ránking de principales usuarios
 Inicialmente, tratamos de identificar los más significativos *Followers* del partido.
-```{r Ranking, echo=TRUE}
+```{r Ranking,  cache=TRUE, echo=TRUE}
+library("twitteR")
+tweeterAuthentication()
 
 # PP friends analysis
-friendsTopFollowersOfFriendsPp <- getTopFollowers(followersDataFramePp)
-friendsTopFriendsOfFriendsPp <- getTopFriends(followersDataFramePp)
-friendsTopTweetsOfFriendsPp <- getTopTweets(followersDataFramePp)
+topFollowersPp <- getTopFollowers(followersDataFramePp)
+topFriendsPp <- getTopFriends(followersDataFramePp)
+TopTweetsPp <- getTopTweets(followersDataFramePp)
 ```
 
 De este modo, en la siguiente tabla se visualizan: los usuarios que siguen a un mayor número de *Friends*, los más seguidos por *Followers* y los más activos en el envío de mensajes (*Tweets*).
-```{r Table, echo=FALSE}
+```{r Table, eval=FALSE,  cache=TRUE, include=FALSE}
 # Table print
+library(xtable)
 
+table <- cbind(head(topFollowersPp, n=3),
+               head(topFriendsPp, n=3),
+               head(topTweetsPp, n=3))
+names(table) <- c("Usuario", "Num Followers", "Usuario", 
+                    "Num Friends", "Usuario", "Num Twits")
+xt <- xtable(table)
+print(xt, type = "html")
+  
 ```
 
 ### Análisis de actividad en la red
 Adicionalmente, podemos calcular la distribución de los usuarios en función de su nivel de actividad en la red.
-```{r GraphDistribution, echo=FALSE}
+```{r GraphDistribution,  cache=TRUE, echo=FALSE}
+library("graphics")
 # Graph distribution of "Num of Users"" vs "Num of Tweets""
+par(mar = rep(2,4))
+hist(followersDataFramePp$statusesCount, col = "blue", breaks = 10)
 
 ```
 
 ### Geolocalización
 Finalmente, mediante de la ubicación de los usuarios, podemos observar su distribución geográfica sobre el territorio.
-```{r GraphGeo, echo=FALSE}
+```{r GraphGeo,  cache=TRUE, echo=FALSE}
+library("ggmap")
+
 # Map with PP Followers
-mapLocations(friendsDataFramePp)
+mapLocations(followersDataFramePp)
 
 ```
 
 De un modo análogo, se obtienen los datos de del **PSOE** y se realiza la comparativa de la distribución geográfica entre los *Followers* de **PP** y **PSOE**.
-```{r GraphGeo2, echo=FALSE}
-# Map with PP Followers
-mapLocations(friendsDataFramePsoe)
+```{r GraphGeo2,  cache=TRUE, echo=TRUE}
+library("ggmap")
+library("twitteR")
+
+# Data frames with PSOE profile information
+tuserPsoe <- getUser("PSOE")
+
+# PP data frames with information of 10 friends
+followersDataFramePsoe <- getFollowersDataFrame(tuserPsoe)
+
+# Map with PSOE Followers
+mapLocations(followersDataFramePsoe)
 
 ```
 
 
 ## Los Tweets
 Es posible extender el análisis a los *Tweets* enviados por los perfiles de usuario de los partidos políticos. En el estudio efectuado, se han tomado los últimos 100 *Tweets* escritos por **PP** y **PSOE**.
-```{r Tweets}
-tweetsOfUserDataFramePsoe <- getUserTweetsDataFrame(tuserPsoe, 100)
-tweetsOfUserDataFramePp <- getUserTweetsDataFrame(tuserPp, 100)
+```{r Tweets, cache=TRUE}
+library("twitteR")
+
+tweetsOfUserDataFramePsoe <- getUserTweetsDataFrame(tuserPsoe, 10)
+tweetsOfUserDataFramePp <- getUserTweetsDataFrame(tuserPp, 10)
 
 ```
 
 De este modo, es posible obtener el historial temporal con la actividad en la red y comparar la cantidad de mensajes enviados entre partidos.
-```{r, echo=FALSE}
+```{r,  cache=TRUE, echo=FALSE}
 # Graphs of activity
+library("stats")
+library("ggplot2")
+qplot(x = created, data = tweetsOfUserDataFramePp, geom = "density", 
+      colour = I("blue"))
+qplot(x = created, data = tweetsOfUserDataFramePsoe, geom = "auto", 
+      colour = I("red"))
 
 ```
 
 
 A nivel de la actividad global en red, se analizan los últimos 100 *Tweets* que tratan sobre el **PP** o el **PSOE** enviados dentro del territorio español.
-```{r}
+```{r, cache=TRUE}
+library("twitteR")
 tweetsDataFramePsoe <- getTweetsDataFrame("PSOE", "40.418,-3.706,700km", 
-                                      number=100, retryOnRateLimit=1)
+                                      number=10)
 tweetsDataFramePp <- getTweetsDataFrame("PP", "40.418,-3.706,700km", 
-                                      number=100, retryOnRateLimit=1)
+                                      number=10)
 ```
 
 A partir de los *Tweets* obtenidos sobre los diferentes partidos políticos, es posible analizar su contenido. De este modo, se estudia cuál de los hilos temáticos correspondientes usa un peor tono e incluye un mayor número de palabrotas.  
 ```{r}
 
 ```
+
 
 
 
