@@ -1,0 +1,104 @@
+---
+title: 'Análisis del impacto en Twitter: PP y PSOE'
+output: html_document
+---
+
+
+```{r Setup, cache=TRUE, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Install/Execute needed libraries
+loadLibraries()
+
+# Authenticates user on Tweeter API
+tweeterAuthentication() 
+```
+
+## Objetivo
+La intensa actividad en las redes sociales las ha convertido en fuentes de grandes volúmenes de información. En caso de Twitter, la extracción y el análisis de los datos propios de usuarios y mensajes, permitirá obtener múltiples resultados estadísticos.
+En este sentido y el marco de unas cercanas elecciones epañolas, se pretende realizar un análisis de los datos que se pueden obtener a partir de la cuenta de twitter oficial de los partidos políticos.
+
+
+## Los contactos
+Se inicia el estudio ralizando una monitorización de los usuarios que siguen (los *Followers*) a un partido político, sea en este caso el **PP** (<https://twitter.com/PPopular>).
+El análisis se realiza sobre una muestra de 10 usuarios, a pesar de que la realidad es mucho mayor. El motivo es la restricción que impone Tweeter para las consultas realizadas a través de API, limitadas a un máximo de 180 cada 15 minutos.
+
+### Extracción de información
+Primeramente se obtiene un conjunto *data frame* con los datos de 10 *Followers* del PP:
+```{r Extraction, eval=FALSE, cache=TRUE, include=FALSE}
+# Data frames with PP profile information
+tuserPp <- twitteR::getUser("PPopular")
+
+# PP data frames with information of 10 friends
+followersDataFramePp <- getFollowersDataFrame(tuserPp)
+```
+
+### Ránking de principales usuarios
+Inicialmente, tratamos de identificar los más significativos *Followers* del partido.
+```{r Ranking, echo=TRUE}
+
+# PP friends analysis
+friendsTopFollowersOfFriendsPp <- getTopFollowers(followersDataFramePp)
+friendsTopFriendsOfFriendsPp <- getTopFriends(followersDataFramePp)
+friendsTopTweetsOfFriendsPp <- getTopTweets(followersDataFramePp)
+```
+
+De este modo, en la siguiente tabla se visualizan: los usuarios que siguen a un mayor número de *Friends*, los más seguidos por *Followers* y los más activos en el envío de mensajes (*Tweets*).
+```{r Table, echo=FALSE}
+# Table print
+
+```
+
+### Análisis de actividad en la red
+Adicionalmente, podemos calcular la distribución de los usuarios en función de su nivel de actividad en la red.
+```{r GraphDistribution, echo=FALSE}
+# Graph distribution of "Num of Users"" vs "Num of Tweets""
+
+```
+
+### Geolocalización
+Finalmente, mediante de la ubicación de los usuarios, podemos observar su distribución geográfica sobre el territorio.
+```{r GraphGeo, echo=FALSE}
+# Map with PP Followers
+mapLocations(friendsDataFramePp)
+
+```
+
+De un modo análogo, se obtienen los datos de del **PSOE** y se realiza la comparativa de la distribución geográfica entre los *Followers* de **PP** y **PSOE**.
+```{r GraphGeo2, echo=FALSE}
+# Map with PP Followers
+mapLocations(friendsDataFramePsoe)
+
+```
+
+
+## Los Tweets
+Es posible extender el análisis a los *Tweets* enviados por los perfiles de usuario de los partidos políticos. En el estudio efectuado, se han tomado los últimos 100 *Tweets* escritos por **PP** y **PSOE**.
+```{r Tweets}
+tweetsOfUserDataFramePsoe <- getUserTweetsDataFrame(tuserPsoe, 100)
+tweetsOfUserDataFramePp <- getUserTweetsDataFrame(tuserPp, 100)
+
+```
+
+De este modo, es posible obtener el historial temporal con la actividad en la red y comparar la cantidad de mensajes enviados entre partidos.
+```{r, echo=FALSE}
+# Graphs of activity
+
+```
+
+
+A nivel de la actividad global en red, se analizan los últimos 100 *Tweets* que tratan sobre el **PP** o el **PSOE** enviados dentro del territorio español.
+```{r}
+tweetsDataFramePsoe <- getTweetsDataFrame("PSOE", "40.418,-3.706,700km", 
+                                      number=100, retryOnRateLimit=1)
+tweetsDataFramePp <- getTweetsDataFrame("PP", "40.418,-3.706,700km", 
+                                      number=100, retryOnRateLimit=1)
+```
+
+A partir de los *Tweets* obtenidos sobre los diferentes partidos políticos, es posible analizar su contenido. De este modo, se estudia cuál de los hilos temáticos correspondientes usa un peor tono e incluye un mayor número de palabrotas.  
+```{r}
+
+```
+
+
+
