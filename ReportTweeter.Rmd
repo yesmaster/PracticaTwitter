@@ -24,6 +24,7 @@ El análisis se realiza sobre una muestra de 10 usuarios, a pesar de que la real
 ### Extracción de información
 Primeramente se obtiene un conjunto *data frame* con los datos de 10 *Followers* del PP:
 ```{r Extraction, cache=TRUE,  echo=TRUE}
+twitterAuthentication() 
 
 # Data frames with PP profile information
 tuserPp <- getUser("PPopular")
@@ -70,6 +71,7 @@ Finalmente, mediante la ubicación de los usuarios, podemos observar su distribu
 
 De un modo análogo, se obtienen los datos de del **PSOE** y se realiza la comparativa de la distribución geográfica entre los *Followers* de **PP** y **PSOE**.
 ```{r GraphGeo2,  cache=TRUE, echo=TRUE}
+twitterAuthentication() 
 
 # Data frames with PSOE profile information
 tuserPsoe <- getUser("PSOE")
@@ -118,8 +120,6 @@ keyWordsList <- readLines("data/insultos.txt")
 keyWordsDataFramePp <- getTweetsWithKeyword(tweetsDataFramePp, keyWordsList)
 keyWordsDataFramePsoe <- getTweetsWithKeyword(tweetsDataFramePsoe, keyWordsList)
 
+#pie(table())
+
 ```
-
-
-
-

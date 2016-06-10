@@ -161,7 +161,6 @@ getUserTweetsDataFrame <- function(user, number)  {
   tweetsData <- list()
   for(i in 1:length(tweets)){
     tweetsData[[i]] <- data.frame(tweets[[i]]$toDataFrame())
-    print(i)
     if(i%%11==0){
         Sys.sleep(15*60)
     }
