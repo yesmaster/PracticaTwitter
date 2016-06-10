@@ -35,10 +35,13 @@ twitterAuthentication <- function(){
 #' @examples
 getFollowersDataFrame <- function(tuser){
   usersData <- list()
-  CONST_FNUM <- 4
+  CONST_FNUM <- 50
   followers <- tuser$getFollowers(n = CONST_FNUM)
   for(i in 1: length(followers)){
     usersData[[i]] <- data.frame(getUser(followers[[i]])$toDataFrame())
+    if(i%%10 == 0) {
+      Sys.sleep(16*60)
+    }
   }
   usersFrame <- ldply(usersData, rbind)
   return(cbind(usersFrame, friendships(usersFrame$screenName)[4:5]))
@@ -161,8 +164,8 @@ getUserTweetsDataFrame <- function(user, number)  {
   tweetsData <- list()
   for(i in 1:length(tweets)){
     tweetsData[[i]] <- data.frame(tweets[[i]]$toDataFrame())
-    if(i%%11==0){
-        Sys.sleep(15*60)
+    if(i%%100 == 0) {
+        Sys.sleep(16*60)
     }
   }
   return(ldply(tweetsData, rbind))
@@ -186,6 +189,9 @@ getTweetsDataFrame <- function(textToSearch, geocode, number){
   tweetsData <- list()
   for(i in 1:length(tweets)){
     tweetsData[[i]] <- data.frame(tweets[[i]]$toDataFrame())
+    if(i%%100 == 0){
+      Sys.sleep(16*60)
+    }
   }
   return(ldply(tweetsData, rbind))
 }
@@ -265,5 +271,6 @@ mapLocations <- function(..., colours)  {
     map <- map + geom
   }
   map
+  title(main = "mapa")
 }
 
