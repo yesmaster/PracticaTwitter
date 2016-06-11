@@ -33,7 +33,7 @@ twitterAuthentication()
 tuserPp <- getUser("PPopular")
 
 # PP data frames with information of 50 friends
-followersDataFramePp <<- getFollowersDataFrame(tuserPp)
+followersDataFramePp <<- getFollowersDataFrame(tuserPp, 50)
 ```
 
 
@@ -54,9 +54,9 @@ library(xtable)
 options(xtable.floating = FALSE)
 options(xtable.timestamp = "")
 
-table <- cbind(head(topFollowersPp, n=3),
-               head(topFriendsPp, n=3),
-               head(topTweetsPp, n=3))
+table <- cbind(head(topFollowersPp, n=10),
+               head(topFriendsPp, n=10),
+               head(topTweetsPp, n=10))
 names(table) <- c("Usuario", "# Followers", "Usuario", 
                   "# Friends", "Usuario", "# Tweets")
 xt <- xtable(table, align ="|l|ll|ll|ll|", digits = 0, caption = "Tabla 1. Usuarios influyentes en Twitter")
@@ -96,7 +96,7 @@ De este modo, ánalogamente a los cálculos ya realizados, se obtienen los datos
 tuserPsoe <- getUser("PSOE")
 
 # PP data frames with information of 50 friends
-followersDataFramePsoe <<- getFollowersDataFrame(tuserPsoe)
+followersDataFramePsoe <<- getFollowersDataFrame(tuserPsoe, 50)
 ```
 
 ```{r Map, echo=FALSE, message=FALSE, warning=FALSE}
@@ -108,11 +108,11 @@ mapLocations(followersDataFramePp, followersDataFramePsoe,
 
 
 ## Los Tweets
-Es posible extender el análisis a los *Tweets* enviados por los perfiles de usuario de los partidos políticos. En el estudio efectuado, se han tomado los últimos 100 *Tweets* escritos por **PP** y **PSOE**.
+Es posible extender el análisis a los *Tweets* enviados por los perfiles de usuario de los partidos políticos. En el estudio efectuado, se han tomado los últimos 150 *Tweets* escritos por **PP** y **PSOE**.
 ```{r TweetsExtraction, echo=TRUE}
 
-tweetsOfUserDataFramePsoe <<- getUserTweetsDataFrame(tuserPsoe, 100)
-tweetsOfUserDataFramePp <<- getUserTweetsDataFrame(tuserPp, 100)
+tweetsOfUserDataFramePsoe <<- getUserTweetsDataFrame(tuserPsoe, 150)
+tweetsOfUserDataFramePp <<- getUserTweetsDataFrame(tuserPp, 150)
 
 ```
 
@@ -131,14 +131,14 @@ ggplot2::qplot(x = created, data = tweetsOfUserDataFramePsoe,
 ```
 
 
-A nivel de la actividad global en red, se analizan los últimos 100 *Tweets* que tratan sobre el **PP** o el **PSOE** enviados dentro del territorio español.
+A nivel de la actividad global en red, se analizan los últimos 150 *Tweets* que tratan sobre el **PP** o el **PSOE** enviados dentro del territorio español.
 ```{r TweetsSearch, echo=TRUE}
 twitterAuthentication() 
 
 tweetsDataFramePp <- getTweetsDataFrame("PP", "40.2,-3.71,700km", 
-                                         number=100)
+                                         number=150)
 tweetsDataFramePsoe <- getTweetsDataFrame("PSOE", "40.42,-3.71,700km",
-                                           number=100)
+                                           number=150)
 
 ```
 
