@@ -3,10 +3,14 @@ title: 'Análisis del impacto en Twitter: PP y PSOE'
 output: html_document
 ---
 ***
-```{r setup, include=FALSE, cache = TRUE}
+```{r setup, include=FALSE}
 
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(
+  echo = TRUE
+)
 library(PracticaTwitter)
+
+
 ```
 
 
@@ -23,7 +27,6 @@ El análisis se realiza sobre una muestra de 50 usuarios, a pesar de que la real
 ### Extracción de información
 Primeramente, después de la autenticación a la API de Twitter se obtiene un conjunto *data frame* con los datos de 50 de los *Followers* del PP:
 ```{r DataExtractionPP, echo=TRUE, message=FALSE}
-
 twitterAuthentication() 
 
 # Data frames with PP profile information
@@ -46,8 +49,8 @@ topTweetsPp <<- getTopTweets(followersDataFramePp)
 
 De este modo, en la siguiente tabla se visualizan: los usuarios que siguen a un mayor número de *Friends*, los más seguidos por *Followers* y los más activos en el envío de mensajes (*Tweets*).
 ```{r TableRanking, echo=FALSE, results="asis"}
-library("knitr")
 # Table print
+library(xtable)
 options(xtable.floating = FALSE)
 options(xtable.timestamp = "")
 
@@ -55,7 +58,7 @@ table <- cbind(head(topFollowersPp, n=3),
                head(topFriendsPp, n=3),
                head(topTweetsPp, n=3))
 names(table) <- c("Usuario", "# Followers", "Usuario", 
-                  "# Friends", "Usuario", "# Twits")
+                  "# Friends", "Usuario", "# Tweets")
 xt <- xtable(table, align ="|l|ll|ll|ll|", digits = 0, caption = "Tabla 1. Usuarios influyentes en Twitter")
 print(xt, type = "html", floating = TRUE, latex.environments = "c")
 ```
@@ -65,7 +68,7 @@ print(xt, type = "html", floating = TRUE, latex.environments = "c")
 Una vez analizados los usuarios más influyentes, se procede a estudiar el vínculo que une al **PP** con el global de usuarios. En este sentido, se construye un grafo para visualizar el vínculo entre usuarios: quién sigue a quién y si se da el caso que se siguen mútuamente. 
 ```{r GraphRelationship, echo=FALSE}
 
-# Grafo code
+# Graph code
 plotReciprocalFollowsGraph(tuserPP, followersDataFramePp)
 
 ```
@@ -88,7 +91,6 @@ Finalmente, mediante la ubicación de los usuarios, podemos observar su distribu
 
 De este modo, ánalogamente a los cálculos ya realizados, se obtienen los datos del **PSOE** (<https://twitter.com/PSOE>) y se realiza la comparativa de distribuciones geográficas entre los *Followers* de **PP** y **PSOE**.
 ```{r DataExtractionPsoe, message=FALSE, warning=FALSE, include=FALSE}
-twitterAuthentication() 
 
 # Data frames with PSOE profile information
 tuserPsoe <- getUser("PSOE")
@@ -100,7 +102,7 @@ followersDataFramePsoe <<- getFollowersDataFrame(tuserPsoe)
 ```{r Map, echo=FALSE, message=FALSE, warning=FALSE}
 # Map with PP and PSOE Followers
 mapLocations(followersDataFramePp, followersDataFramePsoe, 
-             colours = c("blue","red") )
+             colours = c("blue","red"), title = "PP vs PSOE followers" )
 
 ```
 
@@ -117,11 +119,11 @@ tweetsOfUserDataFramePp <<- getUserTweetsDataFrame(tuserPp, 100)
 De este modo, es posible obtener el historial temporal con la actividad en la red y comparar la cantidad de mensajes enviados entre partidos.
 ```{r GraphTweets, echo=FALSE, message=FALSE}
 # Graphs of activity
-qplot(x = created, data = tweetsOfUserDataFramePp, 
+ggplot2::qplot(x = created, data = tweetsOfUserDataFramePp, 
       main = "Actividad del PP [nº Tweets/tiempo]", xlab ="Tiempo", 
       ylab = "Tweets", geom = "auto", colour = I("blue"), 
       fill = I("blue"))
-qplot(x = created, data = tweetsOfUserDataFramePsoe, 
+ggplot2::qplot(x = created, data = tweetsOfUserDataFramePsoe, 
       main = "Actividad del PSOE [nº Tweets/tiempo]", xlab ="Tiempo", 
       ylab = "Tweets", geom = "auto", colour = I("red"), 
       fill = I("red"))
@@ -152,17 +154,23 @@ keyWordsDataFramePsoe <<- getTweetsWithKeyword(tweetsDataFramePsoe,
 ```
 
 ```{r PieTweets, echo=FALSE, message=FALSE, warning=FALSE}
-pie(c(sum(keyWordsDataFramePp[,2]), 
-      10 - sum(keyWordsDataFramePp[,2])), 
-    labels = c(paste ("Tweets con palabrotas - ",
-                      sum(keyWordsDataFramePp[,2]/10)*100, "%")),
-    radius = 1, col = c("yellow", "blue"), main="Tweets sobre PP")
 
-pie(c(sum(keyWordsDataFramePsoe[,2]), 
-      10 - sum(keyWordsDataFramePsoe[,2])), 
-    labels = c(paste ("Tweets con palabrotas - ",
-                      sum(keyWordsDataFramePsoe[,2]/10)*100, "%")), 
-    radius = 1, col = c("yellow", "red"), main="Tweets sobre PSOE")
+if(dim(keyWordsDataFramePp)[1]>0){
+  pie(c(sum(keyWordsDataFramePp[,2]), 
+        10 - sum(keyWordsDataFramePp[,2])), 
+      labels = c(paste ("Tweets con palabrotas - ",
+                        sum(keyWordsDataFramePp[,2]/10)*100, "%")),
+      radius = 1, col = c("yellow", "blue"), main="Tweets sobre PP")
+}
+
+if(dim(keyWordsDataFramePsoe)[1]>0){
+  pie(c(sum(keyWordsDataFramePsoe[,2]), 
+        10 - sum(keyWordsDataFramePsoe[,2])), 
+      labels = c(paste ("Tweets con palabrotas - ",
+                        sum(keyWordsDataFramePsoe[,2]/10)*100, "%")), 
+      radius = 1, col = c("yellow", "red"), main="Tweets sobre PSOE")
+}
+
 ```
 
 

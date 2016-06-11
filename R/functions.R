@@ -1,13 +1,13 @@
-
 #' Title twitterAuthentication
 #' 
-#' User authentication on the Twitter API
+#' User authentication on the Twitter API with the auth.yml file credentials
 #'
 #' @return
 #' @export
 #'
 #' @examples
 twitterAuthentication <- function(){
+  library(twitteR)
   auth = yaml :: yaml.load_file("data/auth.yml") # Load authentication config file
   
   consumer_key <- auth$twitter_auth$consumer_key
@@ -27,21 +27,21 @@ twitterAuthentication <- function(){
 #' 
 #' Data Frame creation with information of Followers from "tuser"
 #'
-#' @param tuser 
+#' @param tuser Twitter user (using getUser("name"))
 #'
-#' @return
+#' @return dataframe with all information available of the followers of a user 'tuser'
 #' @export
 #'
-#' @examples
+#' @examples getFollowersDataFrame(getUser("dummy"))
 getFollowersDataFrame <- function(tuser){
   usersData <- list()
-  CONST_FNUM <- 50
+  CONST_FNUM <- 15 # Number of followers to get
   followers <- tuser$getFollowers(n = CONST_FNUM)
   for(i in 1: length(followers)){
     usersData[[i]] <- data.frame(getUser(followers[[i]])$toDataFrame())
-    if(i%%10 == 0) {
-      Sys.sleep(16*60)
-    }
+    #if(i%%10 == 0) { # Avoid Twitter API Rate limits (wait 15 min / 10 followers)
+    #  Sys.sleep(16*60)
+    #}
   }
   usersFrame <- ldply(usersData, rbind)
   return(cbind(usersFrame, friendships(usersFrame$screenName)[4:5]))
@@ -52,18 +52,21 @@ getFollowersDataFrame <- function(tuser){
 #' 
 #' Data Frame creation with information of Friends from "tuser"
 #'
-#' @param tuser 
+#' @param tuser Twitter user (using getUser("name"))
 #'
-#' @return
+#' @return data frame with all information about the friends of 'tuser'
 #' @export
 #'
-#' @examples
+#' @examples getFriendsDataFrame(getUser("dummy"))
 getFriendsDataFrame <- function(tuser){
   usersData <- list()
-  CONST_FRNUM <- 6
+  CONST_FRNUM <- 15 # Number of friends to get
   friends <- tuser$getFriends(CONST_FRNUM)
   for(i in 1:length(friends)){
     usersData[[i]] <- data.frame(getUser(friends[[i]])$toDataFrame())
+    #if(i%%10 == 0) { # Avoid Twitter API Rate limits (wait 15 min / 10 followers)
+    #  Sys.sleep(16*60)
+    #}    
   }
   usersFrame <- ldply(usersData, rbind)
   return(cbind(usersFrame, friendships(usersFrame$screenName)[4:5]))
@@ -72,14 +75,15 @@ getFriendsDataFrame <- function(tuser){
 
 #' Title getTopFollowers
 #' 
-#' Top results from a users Data Frame (Most popular users)
+#' Top followers from a users Data Frame (Most popular users / Most followers)
 #'
-#' @param usersFrame 
+#' @param usersFrame users data frame
 #'
-#' @return
+#' @return data frame with name/num of followers ofthe followers of a user ordered
+#' ascending by the number of followers
 #' @export
 #'
-#' @examples
+#' @examples getTopFollowers(getFollowersDataFrame(getUser("dummy")))
 getTopFollowers <- function(usersFrame){
   ordredFrame <- usersFrame[with(usersFrame, order(-followersCount)),]
   return(data.frame(user = ordredFrame$screenName, followers = ordredFrame$followersCount))
@@ -88,14 +92,15 @@ getTopFollowers <- function(usersFrame){
 
 #' Title getTopFriends
 #' 
-#' Most follower users
+#' Top friends of followers
 #'
-#' @param usersFrame 
+#' @param usersFrame users data frame
 #'
-#' @return
+#' @return data frame with name/num of friends of the followers of a user ordered
+#' ascending by the number of friends
 #' @export
 #'
-#' @examples
+#' @examples getTopFriends(getFollowersDataFrame(getUser("dummy")))
 getTopFriends <- function(usersFrame){
   ordredFrame <- usersFrame[with(usersFrame, order(-friendsCount)),]
   return(data.frame(user = ordredFrame$screenName, friends = ordredFrame$friendsCount))
@@ -104,14 +109,15 @@ getTopFriends <- function(usersFrame){
 
 #' Title getTopTweets
 #' 
-#' Most active users
+#' Most active users (followers with more tweets)
 #'
-#' @param usersFrame 
+#' @param usersFrame useres data frame
 #'
-#' @return
+#' @return data frame with name/num of tweets of the followers of a user ordered
+#' ascending by the number of tweets
 #' @export
 #'
-#' @examples
+#' @examples getTopTweets(getFollowersDataFrame(getUser("dummy")))
 getTopTweets <- function(usersFrame){
   ordredFrame <- usersFrame[with(usersFrame, order(-statusesCount)),]
   return(data.frame(user = ordredFrame$screenName, statuses = ordredFrame$statusesCount))
@@ -122,10 +128,11 @@ getTopTweets <- function(usersFrame){
 #' 
 #' Store 20 tweets per friend + friend ID + friend ScreenName
 #'
-#' @param usersFrame 
-#' @param tweetsNumber 
+#' @param usersFrame users data frame
+#' @param tweetsNumber number of tweets to extract
 #'
-#' @return
+#' @return matrix with the screen name and its twets depending on the number
+#' of 'tweetsNumber'
 #' @export
 #'
 #' @examples
@@ -139,9 +146,9 @@ fillMatrixOfTweets  <- function(usersFrame, tweetsNumber) {
           mat[i,j] <- ttweets[[j]]$getText()
         }
       }
-      # if(i%%10==0){
-      #    Sys.sleep(15*60)
-      #  }
+      if(i%%10==0){
+          Sys.sleep(15*60)
+      }
     }
   }
   return(mat)
@@ -152,21 +159,21 @@ fillMatrixOfTweets  <- function(usersFrame, tweetsNumber) {
 #' 
 #' Data Frame creation with "number" Tweets from a "user"
 #'
-#' @param user 
-#' @param number 
+#' @param user user data frame
+#' @param number number of tweets to extract
 #'
-#' @return
+#' @return data frame of 'number' of tweets with all their relevant information
 #' @export
 #'
-#' @examples
+#' @examples getUserTweetsDataFrame(getUser("dummy"), number = 100)
 getUserTweetsDataFrame <- function(user, number)  {
   tweets<-userTimeline(user, n=number, includeRts = TRUE)
   tweetsData <- list()
   for(i in 1:length(tweets)){
     tweetsData[[i]] <- data.frame(tweets[[i]]$toDataFrame())
-    if(i%%100 == 0) {
-        Sys.sleep(16*60)
-    }
+    #if(i%%100 == 0) {
+    #    Sys.sleep(16*60)
+    #}
   }
   return(ldply(tweetsData, rbind))
 }
@@ -174,37 +181,39 @@ getUserTweetsDataFrame <- function(user, number)  {
 
 #' Title getTweetsDataFrame
 #' 
-#' Data Frame cration with "number" tweets including "textToSeach" sent by users within "geocode" locations
+#' Data Frame creation with "number" tweets including "textToSeach" sent by users within "geocode" locations
 #'
-#' @param textToSearch 
-#' @param geocode 
-#' @param number 
+#' @param textToSearch String with a text to search on a tweet
+#' @param geocode Geolocalization string
+#' @param number Number of tweets
 #'
-#' @return
+#' @return data frame of 'number' of tweets containing 'textToSearch' with all their relevant information
 #' @export
 #'
-#' @examples
+#' @examples getTweetsDataFrame("str", ""40.2,-3.71,700km", "100")
 getTweetsDataFrame <- function(textToSearch, geocode, number){
   tweets<-searchTwitter(textToSearch, geocode = geocode, n=number, retryOnRateLimit=1) #links search on Tweeter
   tweetsData <- list()
   for(i in 1:length(tweets)){
     tweetsData[[i]] <- data.frame(tweets[[i]]$toDataFrame())
-    if(i%%100 == 0){
-      Sys.sleep(16*60)
-    }
+    #if(i%%100 == 0){
+    #  Sys.sleep(16*60)
+    #}
   }
   return(ldply(tweetsData, rbind))
 }
 
 #' Title getTweetsWithKeyword
 #'
-#' @param tweetsDataFrame 
-#' @param keyWordsList 
+#' Analizes a data frame of tweets searching for some words in a dictionary/list
 #'
-#' @return
+#' @param tweetsDataFrame data frame of tweets to analyze
+#' @param keyWordsList list containing some words
+#'
+#' @return data frame of tweets containing words of a dictionary 'keyWordsList'
 #' @export
 #'
-#' @examples
+#' @examples getTweetsWithKeyword(getTweetsDataFrame(getUser("dummy")), c("a","b"))
 getTweetsWithKeyword <- function(tweetsDataFrame, keyWordsList){
   resTweets <- data.frame()
   for(tweet in tweetsDataFrame$text){
@@ -213,7 +222,6 @@ getTweetsWithKeyword <- function(tweetsDataFrame, keyWordsList){
       regExp <- paste("*",keyWord,"*")
       res <- grep(pattern = regExp, tweet, ignore.case = TRUE)
       if(length(res)>0){
-        #print(paste("Match with ", keyWord, " ", tweet, sep = ""))
         wordsFound <- c(wordsFound, keyWord)
       }
     }
@@ -225,14 +233,17 @@ getTweetsWithKeyword <- function(tweetsDataFrame, keyWordsList){
 }
 
 #' Title plotReciprocalFollowsGraph
+#' 
+#' Plots a graph of the reciprocal followings of 'me' with the users
+#' of the data frame
 #'
-#' @param me 
-#' @param userDataFrame 
+#' @param me Twitter user (using getUser("name"))
+#' @param userDataFrame data frame of users
 #'
-#' @return
+#' @return if the graph is empty prints 'NA'
 #' @export
 #'
-#' @examples
+#' @examples plotReciprocalFollowsGraph(getUser("dummy"), userDataFrame
 plotReciprocalFollowsGraph <- function(me, userDataFrame){
   v1 <- vector()
   v2 <- vector()
@@ -253,24 +264,28 @@ plotReciprocalFollowsGraph <- function(me, userDataFrame){
 
 
 #' Title mapLocations
+#' 
+#' Get the location column of each tweets dataframe and draw it on a Spain
+#' map if not empty
 #'
-#' @param ... 
-#' @param colours 
+#' @param ... Data frames of tweets
+#' @param colours List of colours of the data frames (of ellipsis)
+#' @param title description of the data showed on the map
 #'
 #' @return
 #' @export
 #'
-#' @examples
-mapLocations <- function(..., colours)  {
+#' @examples mapLocations(tweetsDataFrame, tweetsDataFrame2, colours = c("red","green"), "dummy")
+mapLocations <- function(..., colours, title)  {
   dataFrames <- list(...)
   map <- get_map(location = 'Spain', zoom = 6)
-  map <- ggmap(map)
+  map <- ggmap(map, legend = "right")
   for(i in 1:length(dataFrames)){
-    coordinates <- geocode(dataFrames[[i]]$location)
+    coordinates <- geocode(dataFrames[[i]][["location"]])
     geom <- geom_point(data=coordinates, aes(x=lon, y=lat), colour=colours[i], size=3)
     map <- map + geom
   }
+  ggtitle(title)
   map
-  title(main = "mapa")
 }
 
