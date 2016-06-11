@@ -28,15 +28,15 @@ twitterAuthentication <- function(){
 #' Data Frame creation with information of Followers from "tuser"
 #'
 #' @param tuser Twitter user (using getUser("name"))
+#' @param number Number of followers
 #'
 #' @return dataframe with all information available of the followers of a user 'tuser'
 #' @export
 #'
-#' @examples getFollowersDataFrame(getUser("dummy"))
-getFollowersDataFrame <- function(tuser){
+#' @examples getFollowersDataFrame(getUser("dummy"), 20)
+getFollowersDataFrame <- function(tuser, number){
   usersData <- list()
-  CONST_FNUM <- 15 # Number of followers to get
-  followers <- tuser$getFollowers(n = CONST_FNUM)
+  followers <- tuser$getFollowers(n = number)
   for(i in 1: length(followers)){
     usersData[[i]] <- data.frame(getUser(followers[[i]])$toDataFrame())
     #if(i%%10 == 0) { # Avoid Twitter API Rate limits (wait 15 min / 10 followers)
@@ -53,15 +53,15 @@ getFollowersDataFrame <- function(tuser){
 #' Data Frame creation with information of Friends from "tuser"
 #'
 #' @param tuser Twitter user (using getUser("name"))
+#' @param number Number of friends
 #'
 #' @return data frame with all information about the friends of 'tuser'
 #' @export
 #'
-#' @examples getFriendsDataFrame(getUser("dummy"))
-getFriendsDataFrame <- function(tuser){
+#' @examples getFriendsDataFrame(getUser("dummy"), 20)
+getFriendsDataFrame <- function(tuser, number){
   usersData <- list()
-  CONST_FRNUM <- 15 # Number of friends to get
-  friends <- tuser$getFriends(CONST_FRNUM)
+  friends <- tuser$getFriends(number)
   for(i in 1:length(friends)){
     usersData[[i]] <- data.frame(getUser(friends[[i]])$toDataFrame())
     #if(i%%10 == 0) { # Avoid Twitter API Rate limits (wait 15 min / 10 followers)
