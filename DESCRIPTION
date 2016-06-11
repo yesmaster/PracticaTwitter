@@ -8,7 +8,6 @@ Maintainer: Who to complain to <yourfault@somewhere.net>
 Description: More about what it does (maybe more than one line)
 License: MIT
 Imports:
-  twitteR,
   plyr,
   ggmap,
   igraph,
@@ -19,6 +18,8 @@ Imports:
   stats,
   ggplot2,
   xtable,
-  MASS
+  MASS,
+  knitr,
+  twitteR
   
 

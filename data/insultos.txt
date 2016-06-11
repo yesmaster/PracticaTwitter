@@ -3,6 +3,7 @@ baboso
 besugo
 bobo
 burro
+caca
 capullo
 cazurro
 ceporro
@@ -17,10 +18,12 @@ gilipollas
 idiota
 lerdo
 malparido
+mamon
 marica
 maricon
 memo
 mentecato
+mierda
 pendejo
 percebe
 puto
@@ -32,3 +35,4 @@ tontarrón
 tonto
 torpe
 zángano
+zoquete
