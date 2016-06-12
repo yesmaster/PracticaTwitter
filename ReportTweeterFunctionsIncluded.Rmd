@@ -1,0 +1,335 @@
+---
+title: 'Análisis del impacto en Twitter: PP y PSOE'
+output: html_document
+---
+***
+
+```{r setup, include=FALSE, cache = TRUE}
+
+knitr::opts_chunk$set(echo = TRUE)
+
+twitterAuthentication <- function(){
+  auth = yaml :: yaml.load_file("data/auth.yml") # Load authentication config file
+  
+  consumer_key <- auth$twitter_auth$consumer_key
+  consumer_secret <- auth$twitter_auth$consumer_secret
+  access_token <- auth$twitter_auth$access_token
+  access_token_secret <- auth$twitter_auth$access_token_secret
+  
+  options(httr_oauth_cache=T) # Enables cache OAuth access credentials between R sessions
+  setup_twitter_oauth(consumer_key,
+                      consumer_secret,
+                      access_token,
+                      access_token_secret)
+}
+
+getFollowersDataFrame <- function(tuser){
+  usersData <- list()
+  CONST_FNUM <- 50
+  followers <- tuser$getFollowers(n = CONST_FNUM)
+  for(i in 1: length(followers)){
+    usersData[[i]] <- data.frame(getUser(followers[[i]])$toDataFrame())
+    if(i%%10 == 0) {
+      Sys.sleep(16*60)
+    }
+  }
+  usersFrame <- ldply(usersData, rbind)
+  return(cbind(usersFrame, friendships(usersFrame$screenName)[4:5]))
+}
+
+getFriendsDataFrame <- function(tuser){
+  usersData <- list()
+  CONST_FRNUM <- 6
+  friends <- tuser$getFriends(CONST_FRNUM)
+  for(i in 1:length(friends)){
+    usersData[[i]] <- data.frame(getUser(friends[[i]])$toDataFrame())
+  }
+  usersFrame <- ldply(usersData, rbind)
+  return(cbind(usersFrame, friendships(usersFrame$screenName)[4:5]))
+}
+
+getTopFollowers <- function(usersFrame){
+  ordredFrame <- usersFrame[with(usersFrame, order(-followersCount)),]
+  return(data.frame(user = ordredFrame$screenName, followers = ordredFrame$followersCount))
+}
+
+getTopFriends <- function(usersFrame){
+  ordredFrame <- usersFrame[with(usersFrame, order(-friendsCount)),]
+  return(data.frame(user = ordredFrame$screenName, friends = ordredFrame$friendsCount))
+}
+
+getTopTweets <- function(usersFrame){
+  ordredFrame <- usersFrame[with(usersFrame, order(-statusesCount)),]
+  return(data.frame(user = ordredFrame$screenName, statuses = ordredFrame$statusesCount))
+}
+
+fillMatrixOfTweets  <- function(usersFrame, tweetsNumber) {
+  mat <- matrix(nrow = dim(usersFrame)[1], ncol=tweetsNumber)
+  for (i in 1:dim(usersFrame)[1]){  # for 'i' friends
+    if(!usersFrame$protected[[i]]){
+      ttweets <- userTimeline(usersFrame$screenName[[i]], n=tweetsNumber, includeRts = TRUE)  # load 20 tweets from friend 'i'
+      if(length(ttweets) > 0){
+        for (j in 1:length(ttweets))  {
+          mat[i,j] <- ttweets[[j]]$getText()
+        }
+      }
+      # if(i%%10==0){
+      #    Sys.sleep(15*60)
+      #  }
+    }
+  }
+  return(mat)
+}
+
+getUserTweetsDataFrame <- function(user, number)  {
+  tweets<-userTimeline(user, n=number, includeRts = TRUE)
+  tweetsData <- list()
+  for(i in 1:length(tweets)){
+    tweetsData[[i]] <- data.frame(tweets[[i]]$toDataFrame())
+    if(i%%100 == 0) {
+        Sys.sleep(16*60)
+    }
+  }
+  return(ldply(tweetsData, rbind))
+}
+
+getTweetsDataFrame <- function(textToSearch, geocode, number){
+  tweets<-searchTwitter(textToSearch, geocode = geocode, n=number, retryOnRateLimit=1) #links search on Tweeter
+  tweetsData <- list()
+  for(i in 1:length(tweets)){
+    tweetsData[[i]] <- data.frame(tweets[[i]]$toDataFrame())
+    if(i%%100 == 0){
+      Sys.sleep(16*60)
+    }
+  }
+  return(ldply(tweetsData, rbind))
+}
+
+getTweetsWithKeyword <- function(tweetsDataFrame, keyWordsList){
+  resTweets <- data.frame()
+  for(tweet in tweetsDataFrame$text){
+    wordsFound <- list()
+    for(keyWord in keyWordsList){
+      regExp <- paste("*",keyWord,"*")
+      res <- grep(pattern = regExp, tweet, ignore.case = TRUE)
+      if(length(res)>0){
+        #print(paste("Match with ", keyWord, " ", tweet, sep = ""))
+        wordsFound <- c(wordsFound, keyWord)
+      }
+    }
+    if(length(wordsFound)>0){
+      resTweets <- rbind(resTweets, data.frame(tweet = tweet, number = length(wordsFound)))
+    }
+    else  {
+      resTweets <- rbind(resTweets, data.frame(tweet = 0, number = 0))
+    }
+  }
+  return(resTweets)
+}
+
+plotReciprocalFollowsGraph <- function(me, userDataFrame){
+  v1 <- vector()
+  v2 <- vector()
+  for (i in 1:dim(userDataFrame)[1]) {
+    row <- userDataFrame[i,]
+    if(row$following == TRUE && row$followed_by == TRUE){
+      v1 <- c(me$name, row$screenName, v1)
+      v2 <- c(row$screenName, me$name, v2)
+    }
+  }
+  if(length(v1) > 0 && length(v2) > 0){
+    reciprocalGraph <- graph.data.frame(data.frame(v1 = v1, v2 = v2))
+    plot(reciprocalGraph)
+  }
+  else return("NA")
+}
+
+mapLocations <- function(..., colours)  {
+  dataFrames <- list(...)
+  map <- get_map(location = 'Spain', zoom = 6)
+  map <- ggmap(map)
+  for(i in 1:length(dataFrames)){
+    coordinates <- geocode(dataFrames[[i]]$location)
+    geom <- geom_point(data=coordinates, aes(x=lon, y=lat), colour=colours[i], size=3)
+    map <- map + geom
+  }
+  map
+}
+
+```
+
+
+## Objetivo
+La intensa actividad en las redes sociales las ha convertido en fuentes de grandes volúmenes de información. En caso de Twitter, la extracción y el análisis de los datos propios de usuarios y mensajes, permitirá obtener múltiples resultados estadísticos.
+En este sentido y el marco de unas cercanas elecciones epañolas, se pretende realizar un análisis de los datos que se pueden obtener a partir de la cuenta de twitter oficial de los partidos políticos.  
+
+
+## Los contactos
+Se inicia el estudio ralizando una monitorización de los usuarios que siguen (los *Followers*) a un partido político, sea en este caso el **PP** (<https://twitter.com/PPopular>).
+El análisis se realiza sobre una muestra de 50 usuarios, a pesar de que la realidad es mucho mayor. El motivo es la restricción que impone Twitter para las consultas realizadas a través de API, limitadas a un máximo de 180 cada 15 minutos.
+
+
+### Extracción de información
+Primeramente, después de la autenticación a la API de Twitter se obtiene un conjunto *data frame* con los datos de 50 de los *Followers* del PP:
+```{r DataExtractionPP, echo=TRUE, message=FALSE, cache = TRUE}
+library(twitteR)
+library(plyr)
+
+twitterAuthentication() 
+
+# Data frames with PP profile information
+tuserPp <- getUser("PPopular")
+
+# PP data frames with information of 50 friends
+followersDataFramePp <<- getFollowersDataFrame(tuserPp)
+```
+
+
+### Ránking de usuarios influyentes
+Inicialmente, tratamos de identificar los más relevantes *Followers* del partido.
+```{r Ranking, echo=TRUE}
+library(twitteR)
+
+# PP friends analysis
+topFollowersPp <<- getTopFollowers(followersDataFramePp)
+topFriendsPp <<- getTopFriends(followersDataFramePp)
+topTweetsPp <<- getTopTweets(followersDataFramePp)
+```
+
+De este modo, en la siguiente tabla se visualizan: los usuarios que siguen a un mayor número de *Friends*, los más seguidos por *Followers* y los más activos en el envío de mensajes (*Tweets*).
+```{r TableRanking, echo=FALSE, results="asis"}
+library("knitr")
+library("xtable")
+
+# Table print
+options(xtable.floating = FALSE)
+options(xtable.timestamp = "")
+
+table <- cbind(head(topFollowersPp, n=3),
+               head(topFriendsPp, n=3),
+               head(topTweetsPp, n=3))
+names(table) <- c("Usuario", "# Followers", "Usuario", 
+                  "# Friends", "Usuario", "# Twits")
+xt <- xtable(table, align ="|l|ll|ll|ll|", digits = 0, caption = "Tabla 1. Usuarios influyentes en Twitter")
+print(xt, type = "html", floating = TRUE, latex.environments = "c")
+```
+
+
+### Vínculo entre usuarios
+Una vez analizados los usuarios más influyentes, se procede a estudiar el vínculo que une al **PP** con el global de usuarios. En este sentido, se construye un grafo para visualizar el vínculo entre usuarios: quién sigue a quién y si se da el caso que se siguen mútuamente. 
+```{r GraphRelationship, echo=FALSE}
+
+# Grafo code
+plotReciprocalFollowsGraph(tuserPP, followersDataFramePp)
+
+```
+
+
+### Actividad en la red
+Adicionalmente, podemos extraer el comportamiento de lo usuarios mediante la distribución de su nivel de actividad en la red.
+```{r GraphDistribution,  echo=FALSE}
+# Graph distribution of "Num of Users"" vs "Num of Tweets""
+par(mar = rep(2,4))
+hist(followersDataFramePp$statusesCount, breaks = 10, 
+     main = "Distribución de la activiad de los usuarios 
+     [nº usuarios/nº de Tweets]", col = "blue", border = "blue", 
+     axes = TRUE)
+
+```
+
+### Geolocalización
+Finalmente, mediante la ubicación de los usuarios, podemos observar su distribución geográfica en el territorio.
+
+De este modo, ánalogamente a los cálculos ya realizados, se obtienen los datos del **PSOE** (<https://twitter.com/PSOE>) y se realiza la comparativa de distribuciones geográficas entre los *Followers* de **PP** y **PSOE**.
+```{r DataExtractionPsoe, message=FALSE, warning=FALSE, include=FALSE, cache = TRUE}
+library("twitteR")
+twitterAuthentication() 
+
+# Data frames with PSOE profile information
+tuserPsoe <- getUser("PSOE")
+
+# PP data frames with information of 50 friends
+followersDataFramePsoe <<- getFollowersDataFrame(tuserPsoe)
+```
+
+```{r Map, echo=FALSE, message=FALSE, warning=FALSE}
+# Map with PP and PSOE Followers
+library("ggmap")
+library("ggplot2")
+library("mapproj")
+library("plyr")
+
+mapLocations(followersDataFramePp, followersDataFramePsoe, 
+             colours = c("blue","red") )
+
+```
+
+
+## Los Tweets
+Es posible extender el análisis a los *Tweets* enviados por los perfiles de usuario de los partidos políticos. En el estudio efectuado, se han tomado los últimos 100 *Tweets* escritos por **PP** y **PSOE**.
+```{r TweetsExtraction, echo=TRUE, cache = TRUE}
+library("twitteR")
+library("plyr")
+twitterAuthentication() 
+
+tweetsOfUserDataFramePsoe <<- getUserTweetsDataFrame(tuserPsoe, 100)
+tweetsOfUserDataFramePp <<- getUserTweetsDataFrame(tuserPp, 100)
+
+```
+
+De este modo, es posible obtener el historial temporal con la actividad en la red y comparar la cantidad de mensajes enviados entre partidos.
+```{r GraphTweets, echo=FALSE, message=FALSE}
+# Graphs of activity
+qplot(x = created, data = tweetsOfUserDataFramePp, 
+      main = "Actividad del PP [nº Tweets/tiempo]", xlab ="Tiempo", 
+      ylab = "Tweets", geom = "auto", colour = I("blue"), 
+      fill = I("blue"))
+qplot(x = created, data = tweetsOfUserDataFramePsoe, 
+      main = "Actividad del PSOE [nº Tweets/tiempo]", xlab ="Tiempo", 
+      ylab = "Tweets", geom = "auto", colour = I("red"), 
+      fill = I("red"))
+
+```
+
+
+A nivel de la actividad global en red, se analizan los últimos 100 *Tweets* que tratan sobre el **PP** o el **PSOE** enviados dentro del territorio español.
+```{r TweetsSearch, echo=TRUE, cache = FALSE}
+library("twitteR")
+library("plyr")
+twitterAuthentication() 
+
+tweetsDataFramePp <- getTweetsDataFrame("PP", "40.2,-3.71,700km", 
+                                         number=200)
+tweetsDataFramePsoe <- getTweetsDataFrame("PSOE", "40.42,-3.71,700km",
+                                           number=200)
+
+```
+
+A partir de los *Tweets* obtenidos sobre los diferentes partidos políticos, es posible analizar su contenido. De este modo, se estudia cuál de los hilos temáticos correspondientes usa un peor tono e incluye un mayor número de palabrotas.  
+```{r TweetsKeyWords, echo=TRUE}
+keyWordsList <- readLines("data/insultos.txt")
+
+keyWordsDataFramePp <<- getTweetsWithKeyword(tweetsDataFramePp, 
+                                            keyWordsList)
+keyWordsDataFramePsoe <<- getTweetsWithKeyword(tweetsDataFramePsoe, 
+                                              keyWordsList)
+
+```
+
+```{r PieTweets, echo=FALSE, message=FALSE, warning=FALSE}
+library("graphics")
+library("base")
+pie(c(sum(keyWordsDataFramePp[,2]), 
+      200 - sum(keyWordsDataFramePp[,2])), 
+    labels = c(paste ("Tweets con palabrotas - ",
+                      sum(keyWordsDataFramePp[,2]/200)*100, "%")),
+    radius = 1, col = c("yellow", "blue"), main="Tweets sobre PP")
+
+pie(c(sum(keyWordsDataFramePsoe[,2]), 
+      200 - sum(keyWordsDataFramePsoe[,2])), 
+    labels = c(paste ("Tweets con palabrotas - ",
+                      sum(keyWordsDataFramePsoe[,2]/200)*100, "%")), 
+    radius = 1, col = c("yellow", "red"), main="Tweets sobre PSOE")
+```
+
+
