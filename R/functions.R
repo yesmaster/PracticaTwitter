@@ -146,9 +146,9 @@ fillMatrixOfTweets  <- function(usersFrame, tweetsNumber) {
           mat[i,j] <- ttweets[[j]]$getText()
         }
       }
-      if(i%%10==0){
-          Sys.sleep(15*60)
-      }
+      #if(i%%10==0){
+      #    Sys.sleep(15*60)
+      #}
     }
   }
   return(mat)
