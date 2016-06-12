@@ -25,15 +25,15 @@ El análisis se realiza sobre una muestra de 50 usuarios, a pesar de que la real
 
 
 ### Extracción de información
-Primeramente, después de la autenticación a la API de Twitter se obtiene un conjunto *data frame* con los datos de 50 de los *Followers* del PP:
+Primeramente, después de la autenticación a la API de Twitter se obtiene un conjunto *data frame* con los datos de 80 de los *Followers* del PP:
 ```{r DataExtractionPP, echo=TRUE, message=FALSE}
 twitterAuthentication() 
 
 # Data frames with PP profile information
 tuserPp <- getUser("PPopular")
 
-# PP data frames with information of 50 friends
-followersDataFramePp <<- getFollowersDataFrame(tuserPp, 50)
+# PP data frames with information of 80 followers
+followersDataFramePp <<- getFollowersDataFrame(tuserPp, 80)
 ```
 
 
@@ -95,8 +95,8 @@ De este modo, ánalogamente a los cálculos ya realizados, se obtienen los datos
 # Data frames with PSOE profile information
 tuserPsoe <- getUser("PSOE")
 
-# PP data frames with information of 50 friends
-followersDataFramePsoe <<- getFollowersDataFrame(tuserPsoe, 50)
+# PP data frames with information of 80 friends
+followersDataFramePsoe <<- getFollowersDataFrame(tuserPsoe, 80)
 ```
 
 ```{r Map, echo=FALSE, message=FALSE, warning=FALSE}
@@ -108,11 +108,11 @@ mapLocations(followersDataFramePp, followersDataFramePsoe,
 
 
 ## Los Tweets
-Es posible extender el análisis a los *Tweets* enviados por los perfiles de usuario de los partidos políticos. En el estudio efectuado, se han tomado los últimos 150 *Tweets* escritos por **PP** y **PSOE**.
+Es posible extender el análisis a los *Tweets* enviados por los perfiles de usuario de los partidos políticos. En el estudio efectuado, se han tomado los últimos 1000 *Tweets* escritos por **PP** y **PSOE**.
 ```{r TweetsExtraction, echo=TRUE}
 
-tweetsOfUserDataFramePsoe <<- getUserTweetsDataFrame(tuserPsoe, 150)
-tweetsOfUserDataFramePp <<- getUserTweetsDataFrame(tuserPp, 150)
+tweetsOfUserDataFramePsoe <<- getUserTweetsDataFrame(tuserPsoe, 1000)
+tweetsOfUserDataFramePp <<- getUserTweetsDataFrame(tuserPp, 1000)
 
 ```
 
@@ -131,14 +131,14 @@ ggplot2::qplot(x = created, data = tweetsOfUserDataFramePsoe,
 ```
 
 
-A nivel de la actividad global en red, se analizan los últimos 150 *Tweets* que tratan sobre el **PP** o el **PSOE** enviados dentro del territorio español.
+A nivel de la actividad global en red, se analizan los últimos 1000 *Tweets* que tratan sobre el **PP** o el **PSOE** enviados dentro del territorio español.
 ```{r TweetsSearch, echo=TRUE}
 twitterAuthentication() 
 
 tweetsDataFramePp <- getTweetsDataFrame("PP", "40.2,-3.71,700km", 
-                                         number=150)
+                                         number=1000)
 tweetsDataFramePsoe <- getTweetsDataFrame("PSOE", "40.42,-3.71,700km",
-                                           number=150)
+                                           number=1000)
 
 ```
 
@@ -154,20 +154,17 @@ keyWordsDataFramePsoe <<- getTweetsWithKeyword(tweetsDataFramePsoe,
 ```
 
 ```{r PieTweets, echo=FALSE, message=FALSE, warning=FALSE}
-
-if(dim(keyWordsDataFramePp)[1]>0){
-  pie(c(sum(keyWordsDataFramePp[,2]), 
-        10 - sum(keyWordsDataFramePp[,2])), 
-      labels = c(paste ("Tweets con palabrotas - ",
-                        sum(keyWordsDataFramePp[,2]/10)*100, "%")),
+sumKwPP <- dim(keyWordsDataFramePp)[1] # number of tweets of PP found with keywords
+if(sumKwPP>0){
+  pie(c(sumKwPP, 1000 - sumKwPP), 
+      labels = c(paste ("Tweets con palabrotas - ", (sumKwPP/1000)*100, "%")),
       radius = 1, col = c("yellow", "blue"), main="Tweets sobre PP")
 }
 
-if(dim(keyWordsDataFramePsoe)[1]>0){
-  pie(c(sum(keyWordsDataFramePsoe[,2]), 
-        10 - sum(keyWordsDataFramePsoe[,2])), 
-      labels = c(paste ("Tweets con palabrotas - ",
-                        sum(keyWordsDataFramePsoe[,2]/10)*100, "%")), 
+sumKwPSOE <- dim(keyWordsDataFramePsoe)[1] # number of tweets of PSOE found with keywords
+if(sumKwPSOE>0){
+  pie(c(sumKwPSOE, 1000 - sumKwPSOE), 
+      labels = c(paste ("Tweets con palabrotas - ", (sumKwPSOE/1000)*100, "%")), 
       radius = 1, col = c("yellow", "red"), main="Tweets sobre PSOE")
 }
 
